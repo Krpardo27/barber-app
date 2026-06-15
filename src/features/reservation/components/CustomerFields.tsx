@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import type {
   UseFormRegister,
   UseFormSetValue,
-  UseFormWatch,
   FieldErrors,
 } from "react-hook-form";
 import type { ReservationFormData } from "../schemas/reservation.schema";
@@ -13,7 +12,6 @@ import type { ReservationFormData } from "../schemas/reservation.schema";
 type Props = {
   register: UseFormRegister<ReservationFormData>;
   setValue: UseFormSetValue<ReservationFormData>;
-  watch: UseFormWatch<ReservationFormData>;
   errors: FieldErrors<ReservationFormData>;
 };
 
@@ -45,9 +43,16 @@ export default function CustomerFields({
 }: Props) {
   const [mode, setMode] = useState<"search" | "new">("search");
   const [searching, setSearching] = useState(false);
-  const [phone, setPhone] = useState("+569");
+  const [searchPhone, setSearchPhone] = useState("+569");
+  const [newPhone, setNewPhone] = useState("+569");
   const [notFound, setNotFound] = useState(false);
   const [found, setFound] = useState<{
+    id: string;
+    name: string;
+    phone: string;
+  } | null>(null);
+  // Cliente existente encontrado desde el modo "nuevo"
+  const [existingInNew, setExistingInNew] = useState<{
     id: string;
     name: string;
     phone: string;
@@ -83,16 +88,53 @@ export default function CustomerFields({
         setNotFound(true);
         setValue("customerId", undefined);
         
-        toast.error("Este número no se encuentra registrado");
+        toast("Este número no se encuentra registrado", {
+          icon: "ℹ️",
+        });
       }
     } finally {
       setSearching(false);
     }
   };
 
+  // Búsqueda silenciosa para el modo "nuevo": detecta duplicado de teléfono
+  const handleNewPhoneSearch = async (phone: string) => {
+    if (phone.length < 12) {
+      setExistingInNew(null);
+      setValue("customerId", undefined);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `/api/customers/search?phone=${encodeURIComponent(phone)}`
+      );
+      const data = await res.json();
+
+      if (data.customer) {
+        setExistingInNew(data.customer);
+        // Vincular al cliente existente para que el schema no exija nombre
+        setValue("customerId", data.customer.id);
+        setValue("customerName", data.customer.name);
+        toast(` Número ya registrado`, {
+          duration: 5000,
+          style: { borderColor: "rgba(234, 179, 8, 0.4)", color: "#fbbf24" },
+        });
+      } else {
+        setExistingInNew(null);
+        setValue("customerId", undefined);
+      }
+    } catch {
+      // silencioso
+    }
+  };
+
   const resetCustomer = () => {
     setFound(null);
     setNotFound(false);
+    setExistingInNew(null);
+    setSearchPhone("+569");
+    setNewPhone("+569");
 
     setValue("customerId", undefined);
     setValue("customerName", "");
@@ -129,14 +171,19 @@ export default function CustomerFields({
             type="tel"
             placeholder="+56912345678"
             maxLength={12}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A96E]"
+            value={searchPhone}
             onChange={(e) => {
-              const value = e.target.value
-                .replace(/[^\d+]/g, "")
-                .slice(0, 12);
-
-              handleSearch(value);
+              const formatted = formatPhone(e.target.value);
+              setSearchPhone(formatted);
+              handleSearch(formatted);
             }}
+            onKeyDown={(e) => {
+              const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
+              if (!allowed.includes(e.key) && !/^\d$/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A96E]"
           />
 
           {searching && (
@@ -199,15 +246,17 @@ export default function CustomerFields({
               type="tel"
               placeholder="+56912345678"
               maxLength={12}
-              value={phone}
+              value={newPhone}
               onChange={(e) => {
                 const formatted = formatPhone(e.target.value);
 
-                setPhone(formatted);
+                setNewPhone(formatted);
 
                 setValue("customerPhone", formatted, {
                   shouldValidate: true,
                 });
+
+                handleNewPhoneSearch(formatted);
               }}
               onKeyDown={(e) => {
                 const allowed = [
@@ -227,6 +276,14 @@ export default function CustomerFields({
               }}
               className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A96E]"
             />
+
+            {existingInNew && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl px-4 py-3">
+                <p className="text-yellow-400 text-xs font-medium">
+                  ⚠️ Número ya registrado
+                </p>
+              </div>
+            )}
 
             {errors.customerPhone && (
               <p className="text-red-400 text-xs mt-1">

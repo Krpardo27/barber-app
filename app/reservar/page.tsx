@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import ReservationForm from "@/features/reservation/components/ReservationForm";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 export const metadata = {
   title: "Reservar | Barbería",
@@ -23,6 +24,12 @@ export default async function ReservarPage({
   const { serviceId } = await searchParams;
   const services = await getServices();
 
+  // Si se pasa un serviceId, verificar que exista y esté activo
+  if (serviceId) {
+    const valid = services.some((s) => s.id === serviceId);
+    if (!valid) notFound();
+  }
+
   return (
     <main className="min-h-screen bg-stone-950 text-stone-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto space-y-10">
@@ -44,7 +51,7 @@ export default async function ReservarPage({
           <h1 className="text-4xl md:text-5xl font-serif font-bold tracking-tight text-white uppercase">
             Reservar Hora
           </h1>
-          <div className="h-[1px] w-16 bg-gradient-to-r from-transparent via-[#C8A96E] to-transparent mx-auto mt-4" />
+          <div className="h-px w-16 bg-linear-to-r from-transparent via-[#C8A96E] to-transparent mx-auto mt-4" />
         </header>
 
         <div className="bg-zinc-900/40 border border-zinc-900 backdrop-blur-sm rounded-2xl p-6 lg:p-8">

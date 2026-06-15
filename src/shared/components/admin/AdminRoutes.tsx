@@ -51,9 +51,11 @@ export default function AdminRoutes() {
   return (
     <nav className="mt-4 flex flex-col gap-1.5">
       {ADMIN_ROUTES.map((route) => {
+        // Dashboard debe ser exactamente /admin, no incluir subrutas
         const active =
-          pathname === route.href ||
-          pathname.startsWith(`${route.href}/`);
+          route.href === "/admin"
+            ? pathname === "/admin"
+            : pathname.startsWith(`${route.href}/`) || pathname === route.href;
 
         return (
           <Link

@@ -26,7 +26,7 @@ export async function createReservationAction(data: unknown) {
       where: { id: serviceId },
     });
 
-    const start = new Date(startAt);
+    const start = new Date(startAt!);
     const end = new Date(start.getTime() + service.durationMin * 60 * 1000);
 
     // Verificar colisión de horario
@@ -72,7 +72,7 @@ export async function createReservationAction(data: unknown) {
       };
     }
 
-    await prisma.reservation.create({
+    const reservation = await prisma.reservation.create({
       data: {
         customerId: resolvedCustomerId,
         serviceId: service.id,
@@ -83,10 +83,21 @@ export async function createReservationAction(data: unknown) {
         endAt: end,
         notes: notes || null,
       },
+      include: { customer: true },
     });
 
     revalidatePath("/reservar");
-    return { success: true };
+    return {
+      success: true,
+      data: {
+        customerName: reservation.customer.name,
+        customerPhone: reservation.customer.phone,
+        serviceName: reservation.serviceName,
+        servicePrice: reservation.servicePrice,
+        startAt: reservation.startAt.toISOString(),
+        durationMin: reservation.durationMin,
+      },
+    };
   } catch (error) {
     console.error(error);
     return {

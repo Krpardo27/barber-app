@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import ServicioCard from "@/features/servicios/components/ServicioCard";
+import { notFound } from "next/navigation";
 
 async function getServices(categorySlug?: string) {
   return prisma.service.findMany({
@@ -19,6 +20,13 @@ export default async function ServiciosPage({
   params: Promise<{ category?: string }>;
 }) {
   const { category } = await params;
+
+  // Verificar que la categoría exista
+  if (category) {
+    const cat = await prisma.category.findUnique({ where: { slug: category } });
+    if (!cat) notFound();
+  }
+
   const services = await getServices(category);
 
   if (services.length === 0) {

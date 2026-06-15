@@ -1,0 +1,85 @@
+"use client";
+
+import { FiPhone, FiMail, FiCalendar } from "react-icons/fi";
+
+interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  notes: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  reservations: Array<{ id: string }>;
+}
+
+interface ClientsTableProps {
+  customers: Customer[];
+}
+
+export default function ClientsTable({ customers }: ClientsTableProps) {
+  return (
+    <>
+      <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b border-white/10 bg-white/5">
+              <tr>
+                <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">
+                  Nombre
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">
+                  Teléfono
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">
+                  Email
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">
+                  Reservas
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">
+                  Registrado
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {customers.map((customer) => (
+                <tr key={customer.id} className="hover:bg-white/2 transition-colors">
+                  <td className="px-6 py-4 text-white font-medium">{customer.name}</td>
+                  <td className="px-6 py-4 text-white">
+                    <div className="flex items-center gap-2">
+                      <FiPhone className="h-4 w-4 text-zinc-500 shrink-0" />
+                      <span>{customer.phone}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-white">
+                    <div className="flex items-center gap-2">
+                      <FiMail className="h-4 w-4 text-zinc-500 shrink-0" />
+                      <span>{customer.email || "—"}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-400">
+                      <FiCalendar className="h-3 w-3 shrink-0" />
+                      <span>{customer.reservations.length}</span>
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-white text-xs">
+                    {new Date(customer.createdAt).toLocaleDateString("es-CL")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {customers.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-12 text-center">
+          <p className="text-zinc-400">No hay clientes registrados aún.</p>
+        </div>
+      )}
+    </>
+  );
+}

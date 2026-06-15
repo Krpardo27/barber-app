@@ -18,7 +18,6 @@ type Props = {
 export default function ReservationForm({ services, defaultServiceId }: Props) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const {
     register,
@@ -46,8 +45,16 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
       return;
     }
 
-    setSuccess(true);
-    router.push("/reservar/confirmacion");
+    const { customerName, customerPhone, serviceName, servicePrice, startAt: iso, durationMin } = result.data!;
+    const params = new URLSearchParams({
+      name: customerName,
+      phone: customerPhone ?? "",
+      service: serviceName,
+      price: String(servicePrice),
+      startAt: iso,
+      duration: String(durationMin),
+    });
+    router.push(`/reservar/confirmacion?${params.toString()}`);
   };
 
   return (
@@ -88,7 +95,7 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
       {/* CLIENTE */}
       <div>
         <p className="text-xs uppercase tracking-widest text-zinc-400 mb-3">Datos del cliente</p>
-        <CustomerFields register={register} setValue={setValue} errors={errors} watch={watch}/>
+        <CustomerFields register={register} setValue={setValue} errors={errors}/>
       </div>
 
       {/* NOTAS */}

@@ -27,9 +27,10 @@ export const ReservationSchema = z
       .optional()
       .or(z.literal("")),
 
-    startAt: z.string().min(1, {
-      message: "Selecciona una fecha y hora",
-    }),
+    startAt: z
+      .string()
+      .min(1, { message: "Selecciona una fecha y hora" })
+      .optional(),
 
     notes: z
       .string()
@@ -39,6 +40,14 @@ export const ReservationSchema = z
       .optional(),
   })
   .superRefine((data, ctx) => {
+    if (!data.startAt?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["startAt"],
+        message: "Selecciona una fecha y hora",
+      });
+    }
+
     if (!data.customerId) {
       if (!data.customerName?.trim()) {
         ctx.addIssue({

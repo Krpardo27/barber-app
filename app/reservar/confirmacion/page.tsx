@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 function buildWhatsAppUrl(phone: string, message: string) {
@@ -9,7 +10,7 @@ function buildWhatsAppUrl(phone: string, message: string) {
   return `https://wa.me/${cleaned}?text=${encodeURIComponent(message)}`;
 }
 
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const params = useSearchParams();
 
   const name = params.get("name") ?? "";
@@ -119,5 +120,13 @@ export default function ConfirmationPage() {
 
       </div>
     </main>
+  );
+}
+
+export default function ConfirmationPage() {
+  return (
+    <Suspense>
+      <ConfirmationContent />
+    </Suspense>
   );
 }

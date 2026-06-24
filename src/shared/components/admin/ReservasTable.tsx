@@ -1,4 +1,6 @@
 import { FiUser, FiPhone, FiClock, FiDollarSign } from "react-icons/fi";
+import { CancelReservationButton } from "./CancelReservationButton";
+import ReservationStatusButtons from "./ReservationStatusButtons";
 
 interface Customer {
   id: string;
@@ -47,6 +49,8 @@ interface Reservation {
 
 interface ReservasTableProps {
   reservations: Reservation[];
+  showCancelAction?: boolean;
+  showStatusActions?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -60,7 +64,11 @@ const getStatusColor = (status: string) => {
   return colors[status as keyof typeof colors] || "bg-zinc-500/10 text-zinc-400";
 };
 
-export default function ReservasTable({ reservations }: ReservasTableProps) {
+export default function ReservasTable({
+  reservations,
+  showCancelAction = false,
+  showStatusActions = false,
+}: ReservasTableProps) {
   return (
     <>
       <div className="rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
@@ -75,6 +83,9 @@ export default function ReservasTable({ reservations }: ReservasTableProps) {
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Duración</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Precio</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Estado</th>
+                {(showCancelAction || showStatusActions) && (
+                  <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Acciones</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -123,6 +134,18 @@ export default function ReservasTable({ reservations }: ReservasTableProps) {
                       {reservation.status}
                     </span>
                   </td>
+                  {(showCancelAction || showStatusActions) && (
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {showStatusActions && (
+                          <ReservationStatusButtons reservationId={reservation.id} />
+                        )}
+                        {showCancelAction && (
+                          <CancelReservationButton reservationId={reservation.id} />
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

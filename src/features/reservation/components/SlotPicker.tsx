@@ -30,7 +30,10 @@ export default function SlotPicker({ serviceId, value, onChange }: Props) {
           type="date"
           min={today}
           value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
+          onChange={(e) => {
+            setSelectedDate(e.target.value);
+            onChange("");
+          }}
           className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A96E]"
         />
       </div>

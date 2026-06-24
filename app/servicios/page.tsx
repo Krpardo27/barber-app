@@ -1,29 +1,40 @@
 import { prisma } from "@/lib/prisma";
-import ServicioCard from "@/features/servicios/components/ServicioCard";
+import ServiciosSection from "@/features/servicios/components/ServicesSection";
 
 async function getServices() {
   return prisma.service.findMany({
     where: { isActive: true },
-    include: { category: true },
+    include: {
+      category: true,
+      _count: {
+        select: {
+          reservations: {
+            where: {
+              status: { in: ["COMPLETED", "CONFIRMED", "PENDING"] },
+              createdAt: {
+                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: [{ featured: "desc" }, { name: "asc" }],
   });
 }
 
 export default async function ServiciosPage() {
   const services = await getServices();
-
-  if (services.length === 0) {
-    return (
-      <div className="text-center py-12 border border-dashed border-stone-800 rounded-xl">
-        <p className="text-stone-400">No hay servicios disponibles.</p>
-      </div>
-    );
-  }
+  const maxReservations = services.length > 0 ? Math.max(...services.map(s => s._count.reservations)) : 0;
+  const enrichedServices = services.map((service) => ({
+    ...service,
+    isMostReserved: service._count.reservations === maxReservations && maxReservations > 0,
+  }));
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {services.map((service) => (
-        <ServicioCard key={service.id} service={service} />
-      ))}
-    </div>
+    <ServiciosSection
+      services={enrichedServices}
+      emptyMessage="No hay servicios disponibles."
+    />
   );
 }

@@ -3,13 +3,13 @@
 import LogoutButton from "@/features/auth/components/LogoutButton";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isAdminRouteActive } from "./isAdminRouteActive";
 import {
   FiHome,
   FiCalendar,
   FiUsers,
   FiScissors,
-  FiClock,
-  FiSettings,
+  FiArchive,
 } from "react-icons/fi";
 
 export const ADMIN_ROUTES = [
@@ -24,6 +24,11 @@ export const ADMIN_ROUTES = [
     icon: FiCalendar,
   },
   {
+    href: "/admin/historial",
+    label: "Historial",
+    icon: FiArchive,
+  },
+  {
     href: "/admin/clientes",
     label: "Clientes",
     icon: FiUsers,
@@ -33,16 +38,6 @@ export const ADMIN_ROUTES = [
     label: "Servicios",
     icon: FiScissors,
   },
-  {
-    href: "/admin/horarios",
-    label: "Horarios",
-    icon: FiClock,
-  },
-  {
-    href: "/admin/configuracion",
-    label: "Configuración",
-    icon: FiSettings,
-  },
 ];
 
 export default function AdminRoutes() {
@@ -51,11 +46,7 @@ export default function AdminRoutes() {
   return (
     <nav className="mt-4 flex flex-col gap-1.5">
       {ADMIN_ROUTES.map((route) => {
-        // Dashboard debe ser exactamente /admin, no incluir subrutas
-        const active =
-          route.href === "/admin"
-            ? pathname === "/admin"
-            : pathname.startsWith(`${route.href}/`) || pathname === route.href;
+        const active = isAdminRouteActive(pathname, route.href);
 
         return (
           <Link

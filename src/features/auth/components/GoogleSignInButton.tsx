@@ -45,7 +45,7 @@ export default function GoogleSignInButton({
 
   const variantStyles = {
     primary:
-      "bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-white hover:from-blue-500 hover:to-blue-600 active:scale-95",
+      "border border-zinc-200 bg-white px-6 py-3 text-zinc-950 hover:bg-zinc-100 active:scale-95",
     secondary:
       "border border-zinc-700 bg-zinc-900 px-6 py-3 text-white hover:bg-zinc-800 hover:border-zinc-600 active:scale-95",
   };

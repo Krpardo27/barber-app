@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import ReservationForm from "@/features/reservation/components/ReservationForm";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const metadata = {
@@ -34,7 +33,7 @@ export default async function ReservarPage({
     <main className="min-h-screen bg-stone-950 text-stone-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-xl mx-auto space-y-10">
         <header className="text-center space-y-3">
-          <Link
+          {/* <Link
             href="/servicios"
             className="flex items-center gap-2 
               bg-zinc-900 hover:bg-[#C8A96E] 
@@ -44,7 +43,7 @@ export default async function ReservarPage({
               transition-all duration-300 shadow-sm"
           >
             Volver
-          </Link>
+          </Link> */}
           <p className="text-xs font-bold tracking-widest text-[#C8A96E] uppercase">
             Agenda tu visita
           </p>

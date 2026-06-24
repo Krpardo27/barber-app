@@ -1,6 +1,7 @@
 "use client";
 
 import { FiPhone, FiMail, FiCalendar } from "react-icons/fi";
+import { CancelReservationButton } from "./CancelReservationButton";
 
 interface Customer {
   id: string;
@@ -9,9 +10,12 @@ interface Customer {
   email: string | null;
   notes: string | null;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  reservations: Array<{ id: string }>;
+  createdAtLabel: string;
+  reservations: Array<{
+    id: string;
+    startAtLabel: string;
+    status: string;
+  }>;
 }
 
 interface ClientsTableProps {
@@ -41,10 +45,16 @@ export default function ClientsTable({ customers }: ClientsTableProps) {
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">
                   Registrado
                 </th>
+                <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {customers.map((customer) => (
+              {customers.map((customer) => {
+                const nextReservation = customer.reservations[0];
+
+                return (
                 <tr key={customer.id} className="hover:bg-white/2 transition-colors">
                   <td className="px-6 py-4 text-white font-medium">{customer.name}</td>
                   <td className="px-6 py-4 text-white">
@@ -66,10 +76,23 @@ export default function ClientsTable({ customers }: ClientsTableProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-white text-xs">
-                    {new Date(customer.createdAt).toLocaleDateString("es-CL")}
+                    {customer.createdAtLabel}
+                  </td>
+                  <td className="px-6 py-4">
+                    {nextReservation ? (
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-zinc-400 whitespace-nowrap">
+                          {nextReservation.startAtLabel}
+                        </span>
+                        <CancelReservationButton reservationId={nextReservation.id} />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-zinc-500">Sin cita activa</span>
+                    )}
                   </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>

@@ -83,19 +83,13 @@ export async function createReservationAction(data: unknown) {
         endAt: end,
         notes: notes || null,
       },
-      include: { customer: true },
     });
 
     revalidatePath("/reservar");
     return {
       success: true,
       data: {
-        customerName: reservation.customer.name,
-        customerPhone: reservation.customer.phone,
-        serviceName: reservation.serviceName,
-        servicePrice: reservation.servicePrice,
-        startAt: reservation.startAt.toISOString(),
-        durationMin: reservation.durationMin,
+        reservationId: reservation.id,
       },
     };
   } catch (error) {

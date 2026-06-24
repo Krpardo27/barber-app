@@ -6,7 +6,7 @@ import { getRoleFromEmail } from "@/lib/roles";
 import SidebarAdmin from "@/shared/components/admin/SidebarAdmin";
 import AdminMobileDock from "@/shared/components/admin/AdminMobileDock";
 import Link from "next/link";
-import { FiLock, FiAlertTriangle } from "react-icons/fi";
+import { FiAlertTriangle } from "react-icons/fi";
 
 export default async function DashboardLayout({
   children,
@@ -53,7 +53,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#0e0e0e] text-[#dedede] antialiased selection:bg-[#dedede]/10 selection:text-[#dedede]">
-      <div className="mx-auto max-w-[1600px] w-full grid grid-cols-1 lg:grid-cols-[280px_1fr] p-4 gap-4 lg:gap-6">
+      <div className="mx-auto max-w-400 w-full grid grid-cols-1 lg:grid-cols-[280px_1fr] p-4 gap-4 lg:gap-6">
 
         <SidebarAdmin userName={displayName} userEmail={displayEmail} />
 

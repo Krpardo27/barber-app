@@ -1,6 +1,7 @@
 import GoogleSignInButton from "@/features/auth/components/GoogleSignInButton";
-import { FiScissors } from "react-icons/fi";
+import Image from "next/image";
 import Link from "next/link";
+import { FiArrowLeft, FiShield, FiCalendar, FiScissors } from "react-icons/fi";
 
 interface LoginPageProps {
   searchParams: Promise<{
@@ -8,70 +9,97 @@ interface LoginPageProps {
   }>;
 }
 
-export default async function LoginPage({
-  searchParams,
-}: LoginPageProps) {
+export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
 
-  const callbackURL =
-    params.callbackURL || "/admin";
+  const callbackURL = params.callbackURL || "/admin";
 
   return (
-    <main className="min-h-dvh bg-black flex items-center justify-center px-6 relative overflow-hidden">
-      {/* Decorative grid background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1c1917_1px,transparent_1px),linear-gradient(to_bottom,#1c1917_1px,transparent_1px)] bg-size-[4rem_4rem] opacity-20 pointer-events-none" />
-      
-      <div className="w-full max-w-md relative z-10">
-        {/* Header */}
-        <div className="mb-10 flex flex-col items-center text-center space-y-4">
-          <div className="h-16 w-16 rounded-2xl border border-[#C8A96E]/30 bg-black flex items-center justify-center">
-            <FiScissors className="h-8 w-8 -rotate-45 text-[#C8A96E]" />
-          </div>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-950 px-4 py-10 text-white sm:px-6">
+      <Image
+        src="https://images.pexels.com/photos/1813272/pexels-photo-1813272.jpeg"
+        alt="Interior de barberia con silla clasica"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover opacity-35"
+      />
+      <div className="absolute inset-0 bg-zinc-950/75" />
 
+      <div className="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#111111]/90 shadow-2xl shadow-black/40 backdrop-blur-xl lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="hidden min-h-140 flex-col justify-between border-r border-white/10 p-8 lg:flex">
           <div>
-            <h1 className="text-4xl font-serif font-bold text-white tracking-tight">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <FiArrowLeft className="h-3.5 w-3.5" />
+              Volver al sitio
+            </Link>
+          </div>
+
+          <div className="space-y-5">
+            <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#C8A96E]">
               Barber OS
-            </h1>
-            <p className="mt-2 text-sm text-zinc-400">
-              Panel de administración
             </p>
+            <div className="space-y-3">
+              <h1 className="max-w-md text-5xl font-bold leading-tight tracking-tight text-white">
+                Control claro para tu barberia.
+              </h1>
+              <p className="max-w-sm text-sm leading-relaxed text-zinc-300">
+                Administra reservas, clientes y servicios desde un panel pensado para operar rapido durante el dia.
+              </p>
+            </div>
           </div>
 
-          <div className="h-px w-12 bg-[#C8A96E]/40" />
-        </div>
-
-        {/* Form Container */}
-        <div className="rounded-2xl border border-zinc-800/50 bg-linear-to-br from-zinc-900/50 to-black/50 backdrop-blur p-6 lg:p-8 space-y-6">
-          <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#C8A96E]">
+          <div className="grid grid-cols-3 gap-3 text-xs text-zinc-300">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <FiCalendar className="mb-3 h-4 w-4 text-[#C8A96E]" />
+              Reservas
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <FiScissors className="mb-3 h-4 w-4 text-[#C8A96E]" />
+              Servicios
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <FiShield className="mb-3 h-4 w-4 text-[#C8A96E]" />
               Acceso seguro
+            </div>
+          </div>
+        </section>
+
+        <section className="p-6 sm:p-8 lg:p-10">
+          <div className="mb-8 flex items-center justify-between lg:hidden">
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#C8A96E]">
+              Barber OS
             </p>
-            <h2 className="text-xl font-semibold text-white">
-              Inicia sesión con tu cuenta
-            </h2>
-            <p className="text-sm text-zinc-400">
-              Solo administradores pueden acceder al panel.
-            </p>
+            <Link href="/" className="text-xs font-semibold text-zinc-400 hover:text-white">
+              Inicio
+            </Link>
           </div>
 
-          <GoogleSignInButton
-            callbackURL={callbackURL}
-            text="Continuar con Google"
-            variant="primary"
-            className="w-full"
-          />
+          <div className="mx-auto flex min-h-105 max-w-sm flex-col justify-center">
+            <div className="mb-8 space-y-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#C8A96E]/25 bg-[#C8A96E]/10 text-[#C8A96E]">
+                <FiShield className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight text-white">
+                  Iniciar sesion
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                  Entra con tu cuenta autorizada para gestionar la barberia.
+                </p>
+              </div>
+            </div>
 
-          <p className="text-xs text-center text-zinc-500 leading-relaxed">
-            Al iniciar sesión, aceptas nuestros términos de servicio y política de privacidad.
-          </p>
-        </div>
+            <GoogleSignInButton callbackURL={callbackURL} className="h-12 w-full" />
 
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-[#C8A96E] hover:text-[#F5E6C8] transition-colors">
-            Volver al inicio
-          </Link>
-        </div>
+            <p className="mt-6 text-center text-xs leading-relaxed text-zinc-500">
+              Solo las cuentas con rol administrador pueden acceder al panel.
+            </p>
+          </div>
+        </section>
       </div>
     </main>
   );

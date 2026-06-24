@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
 import type {
   UseFormRegister,
   UseFormSetValue,
@@ -57,11 +57,21 @@ export default function CustomerFields({
     name: string;
     phone: string;
   } | null>(null);
+  const latestSearchPhone = useRef(searchPhone);
+  const latestNewPhone = useRef(newPhone);
+
+  const clearSelectedCustomer = () => {
+    setValue("customerId", undefined);
+    setValue("customerName", "");
+    setValue("customerPhone", "");
+    setValue("customerEmail", "");
+  };
 
   const handleSearch = async (phone: string) => {
     if (phone.length < 12) {
       setFound(null);
       setNotFound(false);
+      clearSelectedCustomer();
       return;
     }
 
@@ -74,6 +84,8 @@ export default function CustomerFields({
 
       const data = await res.json();
 
+      if (latestSearchPhone.current !== phone) return;
+
       if (data.customer) {
         setFound(data.customer);
         setNotFound(false);
@@ -82,18 +94,18 @@ export default function CustomerFields({
         setValue("customerName", data.customer.name);
         setValue("customerPhone", data.customer.phone);
         
-        toast.success(`✓ Cliente encontrado: ${data.customer.name}`);
+        toast.success(`Cliente encontrado: ${data.customer.name}`);
       } else {
         setFound(null);
         setNotFound(true);
-        setValue("customerId", undefined);
+        clearSelectedCustomer();
         
-        toast("Este número no se encuentra registrado", {
-          icon: "ℹ️",
-        });
+        toast.info("Este numero no se encuentra registrado");
       }
     } finally {
-      setSearching(false);
+      if (latestSearchPhone.current === phone) {
+        setSearching(false);
+      }
     }
   };
 
@@ -111,12 +123,13 @@ export default function CustomerFields({
       );
       const data = await res.json();
 
+      if (latestNewPhone.current !== phone) return;
+
       if (data.customer) {
         setExistingInNew(data.customer);
         // Vincular al cliente existente para que el schema no exija nombre
         setValue("customerId", data.customer.id);
-        setValue("customerName", data.customer.name);
-        toast(` Número ya registrado`, {
+        toast.warning("Numero ya registrado", {
           duration: 5000,
           style: { borderColor: "rgba(234, 179, 8, 0.4)", color: "#fbbf24" },
         });
@@ -136,14 +149,13 @@ export default function CustomerFields({
     setSearchPhone("+569");
     setNewPhone("+569");
 
-    setValue("customerId", undefined);
-    setValue("customerName", "");
-    setValue("customerPhone", "");
-    setValue("customerEmail", "");
+    clearSelectedCustomer();
   };
 
   return (
     <div className="space-y-4">
+      <input type="hidden" {...register("customerMode")} />
+
       <div className="flex gap-2">
         {(["search", "new"] as const).map((m) => (
           <button
@@ -151,6 +163,7 @@ export default function CustomerFields({
             type="button"
             onClick={() => {
               setMode(m);
+              setValue("customerMode", m);
               resetCustomer();
             }}
             className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-all ${mode === m
@@ -174,6 +187,7 @@ export default function CustomerFields({
             value={searchPhone}
             onChange={(e) => {
               const formatted = formatPhone(e.target.value);
+              latestSearchPhone.current = formatted;
               setSearchPhone(formatted);
               handleSearch(formatted);
             }}
@@ -215,6 +229,12 @@ export default function CustomerFields({
               </button>
             </p>
           )}
+
+          {errors.customerId && (
+            <p className="text-red-400 text-xs mt-1">
+              {errors.customerId.message}
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-3">
@@ -250,6 +270,7 @@ export default function CustomerFields({
               onChange={(e) => {
                 const formatted = formatPhone(e.target.value);
 
+                latestNewPhone.current = formatted;
                 setNewPhone(formatted);
 
                 setValue("customerPhone", formatted, {

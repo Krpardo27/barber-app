@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const chilePhoneRegex = /^\+569\d{8}$/;
+const chilePhoneMessage = "Debe tener formato chileno +569XXXXXXXX";
 
 export const ReservationSchema = z
   .object({
@@ -8,15 +9,14 @@ export const ReservationSchema = z
       message: "Selecciona un servicio",
     }),
 
+    customerMode: z.enum(["search", "new"]),
     customerId: z.string().optional(),
     customerName: z.string().optional(),
     customerPhone: z
       .string()
-      .length(12, {
-        message: "Debe contener 12 caracteres",
-      })
-      .regex(chilePhoneRegex, {
-        message: "Debe tener formato +569XXXXXXXX",
+      .trim()
+      .refine((phone) => phone === "" || chilePhoneRegex.test(phone), {
+        message: chilePhoneMessage,
       })
       .optional(),
 
@@ -27,10 +27,7 @@ export const ReservationSchema = z
       .optional()
       .or(z.literal("")),
 
-    startAt: z
-      .string()
-      .min(1, { message: "Selecciona una fecha y hora" })
-      .optional(),
+    startAt: z.string().optional(),
 
     notes: z
       .string()
@@ -40,7 +37,7 @@ export const ReservationSchema = z
       .optional(),
   })
   .superRefine((data, ctx) => {
-    if (!data.startAt?.trim()) {
+    if (data.serviceId.trim() && !data.startAt?.trim()) {
       ctx.addIssue({
         code: "custom",
         path: ["startAt"],
@@ -48,7 +45,15 @@ export const ReservationSchema = z
       });
     }
 
-    if (!data.customerId) {
+    if (data.customerMode === "search" && !data.customerId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["customerId"],
+        message: "Busca un cliente registrado o crea uno nuevo",
+      });
+    }
+
+    if (data.customerMode === "new" && !data.customerId) {
       if (!data.customerName?.trim()) {
         ctx.addIssue({
           code: "custom",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,19 +22,21 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<ReservationFormData>({
     resolver: zodResolver(ReservationSchema),
     defaultValues: {
       serviceId: defaultServiceId ?? "",
+      customerMode: "search",
     },
   });
 
-  const serviceId = watch("serviceId");
-  const startAt = watch("startAt");
+  const serviceId = useWatch({ control, name: "serviceId" });
+  const startAt = useWatch({ control, name: "startAt" });
   const selectedService = services.find((s) => s.id === serviceId);
+  const serviceField = register("serviceId");
 
   const onSubmit = async (data: ReservationFormData) => {
     setServerError(null);
@@ -45,15 +47,7 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
       return;
     }
 
-    const { customerName, customerPhone, serviceName, servicePrice, startAt: iso, durationMin } = result.data!;
-    const params = new URLSearchParams({
-      name: customerName,
-      phone: customerPhone ?? "",
-      service: serviceName,
-      price: String(servicePrice),
-      startAt: iso,
-      duration: String(durationMin),
-    });
+    const params = new URLSearchParams({ id: result.data!.reservationId });
     router.push(`/reservar/confirmacion?${params.toString()}`);
   };
 
@@ -65,7 +59,11 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
           Servicio
         </label>
         <select
-          {...register("serviceId")}
+          {...serviceField}
+          onChange={(event) => {
+            serviceField.onChange(event);
+            setValue("startAt", "");
+          }}
           className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A96E]"
         >
           <option value="">Selecciona un servicio</option>
@@ -88,7 +86,7 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
           onChange={(iso) => setValue("startAt", iso)}
         />
       )}
-      {errors.startAt && (
+      {serviceId && errors.startAt && (
         <p className="text-red-400 text-xs -mt-6">{errors.startAt.message}</p>
       )}
 

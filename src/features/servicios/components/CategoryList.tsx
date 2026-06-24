@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Category } from "@/generated/prisma/client";
-import { motion } from "framer-motion";
 
 type CategoryListProps = {
   categories: Category[];
@@ -14,31 +13,19 @@ export default function CategoryList({ categories }: CategoryListProps) {
 
   const isAllActive = pathname === "/servicios";
 
-  const linkBaseStyles = `
-    relative flex items-center justify-between
-    rounded-xl px-4 py-3 text-sm font-medium
-    transition-all duration-300 border whitespace-nowrap lg:whitespace-normal
-  `;
+  const linkBaseStyles = "inline-flex h-10 shrink-0 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors";
 
   return (
-    <nav className="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-3 lg:pb-0 scrollbar-none">
+    <nav className="flex gap-2 overflow-x-auto pb-2 scrollbar-none sm:justify-center">
       <Link
         href="/servicios"
-        className={`
-          ${linkBaseStyles}
-          ${isAllActive
+        className={`${linkBaseStyles} ${
+          isAllActive
             ? "border-[#C8A96E]/40 bg-[#C8A96E]/5 text-[#F5E6C8]"
             : "border-zinc-900 bg-zinc-950/40 text-zinc-400 hover:border-zinc-800 hover:text-zinc-200"
-          }
-        `}
+        }`}
       >
-        <span>Todos los servicios</span>
-        {isAllActive && (
-          <motion.span
-            layoutId="activeIndicator"
-            className="hidden lg:block h-1.5 w-1.5 rounded-full"
-          />
-        )}
+        Todos
       </Link>
 
       {categories.map((category) => {
@@ -48,22 +35,13 @@ export default function CategoryList({ categories }: CategoryListProps) {
           <Link
             key={category.id}
             href={`/servicios/${category.slug}`}
-            className={`
-              ${linkBaseStyles}
-              ${isActive
-                ? "border-[#C8A96E]/40  text-[#F5E6C8]"
+            className={`${linkBaseStyles} ${
+              isActive
+                ? "border-[#C8A96E]/40 bg-[#C8A96E]/5 text-[#F5E6C8]"
                 : "border-zinc-900  text-zinc-400 hover:border-zinc-800 hover:text-zinc-200"
-              }
-            `}
+            }`}
           >
-            <span className="relative z-10">{category.name}</span>
-
-            {isActive && (
-              <motion.span
-                layoutId="activeIndicator"
-                className="hidden lg:block h-1.5 w-1.5 rounded-full bg-[#C8A96E]"
-              />
-            )}
+            {category.name}
           </Link>
         );
       })}

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { formatPrice } from "@/shared/utils/formatPrice";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -32,10 +33,6 @@ function formatReservationDate(date: Date) {
   }).format(date);
 }
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat("es-CL").format(price);
-}
-
 export default async function ConfirmationPage({ searchParams }: ConfirmationPageProps) {
   const { id } = await searchParams;
 
@@ -45,7 +42,18 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
 
   const reservation = await prisma.reservation.findUnique({
     where: { id },
-    include: { customer: true },
+    select: {
+      serviceName: true,
+      servicePrice: true,
+      durationMin: true,
+      startAt: true,
+      customer: {
+        select: {
+          name: true,
+          phone: true,
+        },
+      },
+    },
   });
 
   if (!reservation) {
@@ -53,12 +61,12 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
   }
 
   const formattedDate = formatReservationDate(reservation.startAt);
-  const formattedPrice = formatPrice(reservation.servicePrice);
+
   const whatsappMessage = [
     `Hola, soy ${reservation.customer.name}.`,
-    `Acabo de reservar ${reservation.serviceName} para el ${formattedDate}.`,
+    `Acabo de reservar: ${reservation.serviceName} para el ${formattedDate}.`,
     `Mi telefono es ${reservation.customer.phone}.`,
-    "Quedo atento a la confirmacion. Gracias.",
+    "Quedo atento a la confirmación. Gracias.",
   ].join("\n");
   const whatsappUrl = buildWhatsAppUrl(BARBERSHOP_WHATSAPP_PHONE, whatsappMessage);
 
@@ -82,7 +90,7 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
             Reserva confirmada
           </h1>
           <p className="text-sm leading-relaxed text-zinc-400">
-            Tu hora fue agendada correctamente. Guarda el detalle y contacta a la barberia si necesitas ajustar algo.
+            Tu hora fue agendada correctamente. Guarda el detalle y contacta a la barbería si necesitas ajustar algo.
           </p>
         </div>
 
@@ -112,9 +120,11 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
               <span className="text-white sm:text-right">{reservation.durationMin} min</span>
             </div>
 
-            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
+            <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-center">
               <span className="text-zinc-400">Precio</span>
-              <span className="font-semibold text-[#C8A96E] sm:text-right">${formattedPrice}</span>
+              <span className="text-xl font-bold text-[#C8A96E] sm:text-right">
+                {formatPrice(reservation.servicePrice)}
+              </span>
             </div>
           </div>
         </section>
@@ -132,12 +142,10 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
               Contactar por WhatsApp
             </a>
           ) : (
-            <p className="rounded-2xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-300">
-              Configura BARBERSHOP_WHATSAPP_PHONE para habilitar el contacto por WhatsApp.
-            </p>
+            ''
           )}
 
-          <div className="flex flex-col justify-center gap-3 sm:flex-row">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row">
             <Link
               href="/reservar"
               className="rounded-xl border border-zinc-800 px-6 py-3 text-center text-sm text-zinc-300 transition-all hover:border-zinc-600 hover:text-white"

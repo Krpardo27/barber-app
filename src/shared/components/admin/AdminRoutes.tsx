@@ -24,11 +24,6 @@ export const ADMIN_ROUTES = [
     icon: FiCalendar,
   },
   {
-    href: "/admin/historial",
-    label: "Historial",
-    icon: FiArchive,
-  },
-  {
     href: "/admin/clientes",
     label: "Clientes",
     icon: FiUsers,
@@ -37,6 +32,11 @@ export const ADMIN_ROUTES = [
     href: "/admin/servicios",
     label: "Servicios",
     icon: FiScissors,
+  },
+  {
+    href: "/admin/historial",
+    label: "Historial",
+    icon: FiArchive,
   },
 ];
 
@@ -74,7 +74,7 @@ export default function AdminRoutes() {
         );
       })}
 
-     <LogoutButton />
+      <LogoutButton />
     </nav>
   );
 }

@@ -18,7 +18,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-950 px-4 py-10 text-white sm:px-6">
       <Image
         src="https://images.pexels.com/photos/1813272/pexels-photo-1813272.jpeg"
-        alt="Interior de barberia con silla clasica"
+        alt="Interior de barbería con silla clasica"
         fill
         priority
         sizes="100vw"
@@ -40,11 +40,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
           <div className="space-y-5">
             <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#C8A96E]">
-              Barber OS
+              Barbería
             </p>
             <div className="space-y-3">
               <h1 className="max-w-md text-5xl font-bold leading-tight tracking-tight text-white">
-                Control claro para tu barberia.
+                Control claro para tu barbería.
               </h1>
               <p className="max-w-sm text-sm leading-relaxed text-zinc-300">
                 Administra reservas, clientes y servicios desde un panel pensado para operar rapido durante el dia.
@@ -53,16 +53,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
 
           <div className="grid grid-cols-3 gap-3 text-xs text-zinc-300">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <FiCalendar className="mb-3 h-4 w-4 text-[#C8A96E]" />
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <FiCalendar className="h-4 w-4 text-[#C8A96E]" />
               Reservas
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <FiScissors className="mb-3 h-4 w-4 text-[#C8A96E]" />
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <FiScissors className="h-4 w-4 text-[#C8A96E]" />
               Servicios
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <FiShield className="mb-3 h-4 w-4 text-[#C8A96E]" />
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-4">
+              <FiShield className="h-4 w-4 text-[#C8A96E]" />
               Acceso seguro
             </div>
           </div>
@@ -88,7 +88,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   Iniciar sesion
                 </h2>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-                  Entra con tu cuenta autorizada para gestionar la barberia.
+                  Entra con tu cuenta autorizada para gestionar la barbería.
                 </p>
               </div>
             </div>

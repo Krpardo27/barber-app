@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import ReservasTable from "@/shared/components/admin/ReservasTable";
 import type { Prisma, ReservationStatus } from "@/generated/prisma/client";
 import HistorialFilters from "@/shared/components/admin/HistorialFilters";
+import { notFound } from "next/navigation";
 
 type HistorialStatus = "ALL" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
 const HISTORY_STATUSES: ReservationStatus[] = ["CANCELLED", "COMPLETED", "NO_SHOW"];
@@ -16,26 +17,41 @@ function toDateEnd(value: string) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function isValidStatus(value?: string): value is HistorialStatus {
-  return ["ALL", "CANCELLED", "COMPLETED", "NO_SHOW"].includes(value || "");
+function getSingleParam(value?: string | string[]) {
+  return Array.isArray(value) ? null : value;
+}
+
+function isValidStatus(value: string): value is HistorialStatus {
+  return ["ALL", "CANCELLED", "COMPLETED", "NO_SHOW"].includes(value);
 }
 
 export default async function HistorialPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    status?: string;
-    from?: string;
-    to?: string;
+    status?: string | string[];
+    from?: string | string[];
+    to?: string | string[];
   }>;
 }) {
   const params = await searchParams;
-  const selectedStatus: HistorialStatus = isValidStatus(params.status)
-    ? params.status
-    : "ALL";
+  const status = getSingleParam(params.status);
+  let selectedStatus: HistorialStatus = "ALL";
 
-  const from = params.from || "";
-  const to = params.to || "";
+  if (status === null) {
+    notFound();
+  }
+
+  if (status) {
+    if (!isValidStatus(status)) {
+      notFound();
+    }
+
+    selectedStatus = status;
+  }
+
+  const from = getSingleParam(params.from) || "";
+  const to = getSingleParam(params.to) || "";
   const fromDate = from ? toDateStart(from) : null;
   const toDate = to ? toDateEnd(to) : null;
 

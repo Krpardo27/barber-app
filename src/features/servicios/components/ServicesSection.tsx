@@ -1,12 +1,8 @@
 import ServicioCard from "./ServicioCard";
 import type { Service } from "@/generated/prisma/client";
 
-type ServiceWithStats = Service & {
-  isMostReserved?: boolean;
-};
-
 type ServicesSectionProps = {
-  services: ServiceWithStats[];
+  services: Service[];
   emptyMessage?: string;
 };
 
@@ -25,11 +21,7 @@ export default function ServiciosSection({
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
       {services.map((service) => (
-        <ServicioCard
-          key={service.id}
-          service={service}
-          isMostReserved={service.isMostReserved}
-        />
+        <ServicioCard key={service.id} service={service} />
       ))}
     </div>
   );

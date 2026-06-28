@@ -136,7 +136,6 @@ export default async function ReservasPage({ searchParams }: ReservasPageProps) 
         reservations={reservations}
         showCancelAction
         showStatusActions
-        showWhatsAppAction
       />
 
       <Pagination

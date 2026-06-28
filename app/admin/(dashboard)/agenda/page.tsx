@@ -1,6 +1,12 @@
 import { ReservationStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import WhatsAppButton from "@/shared/components/admin/WhatsAppButton";
+import {
+  formatDisplayTime,
+  formatLongDate,
+  formatShortDate,
+  formatTwentyFourHourTime,
+} from "@/shared/utils/dateFormatters";
 import { FiCalendar, FiClock, FiUser } from "react-icons/fi";
 
 function getTodayInputValue() {
@@ -35,22 +41,9 @@ export default async function AgendaPage({
 }) {
   const { date } = await searchParams;
   const selectedDate = date || getTodayInputValue();
-  const fromDate = toDateStart(selectedDate) ?? toDateStart(getTodayInputValue())!;
+  const fromDate =
+    toDateStart(selectedDate) ?? toDateStart(getTodayInputValue())!;
   const toDate = toDateEnd(selectedDate) ?? toDateEnd(getTodayInputValue())!;
-
-  const timeFormatter = new Intl.DateTimeFormat("es-CL", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "America/Santiago",
-  });
-
-  const dateFormatter = new Intl.DateTimeFormat("es-CL", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    timeZone: "America/Santiago",
-  });
 
   const reservations = await prisma.reservation.findMany({
     where: {
@@ -74,11 +67,14 @@ export default async function AgendaPage({
         <div>
           <h2 className="text-3xl font-bold text-white">Agenda</h2>
           <p className="mt-2 capitalize text-zinc-400">
-            {dateFormatter.format(fromDate)}
+            {formatLongDate(fromDate)}
           </p>
         </div>
 
-        <form action="/admin/agenda" className="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <form
+          action="/admin/agenda"
+          className="flex flex-col gap-2 sm:flex-row sm:items-end"
+        >
           <label className="flex flex-col gap-2 text-xs text-zinc-300">
             Fecha
             <input
@@ -100,15 +96,25 @@ export default async function AgendaPage({
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <p className="text-xs uppercase tracking-wide text-zinc-500">Citas</p>
-          <p className="mt-2 text-2xl font-semibold text-white">{reservations.length}</p>
+          <p className="mt-2 text-2xl font-semibold text-white">
+            {reservations.length}
+          </p>
         </div>
         <div className="rounded-2xl border border-yellow-500/15 bg-yellow-500/10 p-4">
-          <p className="text-xs uppercase tracking-wide text-yellow-500/80">Pendientes</p>
-          <p className="mt-2 text-2xl font-semibold text-yellow-300">{pendingCount}</p>
+          <p className="text-xs uppercase tracking-wide text-yellow-500/80">
+            Pendientes
+          </p>
+          <p className="mt-2 text-2xl font-semibold text-yellow-300">
+            {pendingCount}
+          </p>
         </div>
         <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/10 p-4">
-          <p className="text-xs uppercase tracking-wide text-emerald-500/80">Confirmadas</p>
-          <p className="mt-2 text-2xl font-semibold text-emerald-300">{confirmedCount}</p>
+          <p className="text-xs uppercase tracking-wide text-emerald-500/80">
+            Confirmadas
+          </p>
+          <p className="mt-2 text-2xl font-semibold text-emerald-300">
+            {confirmedCount}
+          </p>
         </div>
       </div>
 
@@ -123,7 +129,7 @@ export default async function AgendaPage({
                 <div className="flex items-center gap-2 text-[#C8A96E]">
                   <FiClock className="h-4 w-4" />
                   <span className="text-lg font-semibold">
-                    {timeFormatter.format(reservation.startAt)}
+                    {formatDisplayTime(reservation.startAt)}
                   </span>
                 </div>
 
@@ -138,16 +144,18 @@ export default async function AgendaPage({
                     </span>
                   </div>
                   <p className="text-sm text-zinc-400">
-                    {reservation.serviceName} · {reservation.durationMin} min · $
-                    {reservation.servicePrice.toLocaleString("es-CL")}
+                    {reservation.serviceName} · {reservation.durationMin} min ·
+                    ${reservation.servicePrice.toLocaleString("es-CL")}
                   </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 md:justify-end">
                   <WhatsAppButton
                     phone={reservation.customer.phone}
-                    message={`Hola ${reservation.customer.name}, te recordamos tu reserva de ${reservation.serviceName} hoy a las ${timeFormatter.format(reservation.startAt)}.`}
-                    label="Recordar"
+                    message={`💈 *Recordatorio de cita*
+Hola ${reservation.customer.name}. Te recordamos que tu cita de *${reservation.serviceName}* está programada para el día *${formatShortDate(reservation.startAt)}* a las *${formatTwentyFourHourTime(reservation.startAt)}*.
+¡Te esperamos! 😊`}
+                    label="Recordar cita por whatsapp"
                   />
                 </div>
               </article>
@@ -156,7 +164,9 @@ export default async function AgendaPage({
         ) : (
           <div className="p-12 text-center">
             <FiCalendar className="mx-auto h-8 w-8 text-zinc-600" />
-            <p className="mt-3 text-zinc-400">No hay citas activas para este día.</p>
+            <p className="mt-3 text-zinc-400">
+              No hay citas activas para este día.
+            </p>
           </div>
         )}
       </div>

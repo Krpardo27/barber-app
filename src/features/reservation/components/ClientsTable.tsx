@@ -14,6 +14,7 @@ interface Customer {
   createdAtLabel: string;
   reservations: Array<{
     id: string;
+    serviceName: string;
     startAtLabel: string;
     status: string;
   }>;
@@ -86,20 +87,25 @@ export default function ClientsTable({ customers }: ClientsTableProps) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-2">
-                        <WhatsAppButton
-                          phone={customer.phone}
-                          message={`Hola ${customer.name}, te escribimos desde la barberia.`}
-                          label="Contactar"
-                        />
                         {nextReservation ? (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-xs text-zinc-400 whitespace-nowrap">
-                              {nextReservation.startAtLabel}
-                            </span>
-                            <CancelReservationButton
-                              reservationId={nextReservation.id}
+                          <>
+                            <WhatsAppButton
+                              phone={customer.phone}
+                              message={`💈 *Recordatorio de cita*
+Hola ${customer.name}. Te recordamos que tu cita de *${nextReservation.serviceName}* está programada para el día *${nextReservation.startAtLabel}*.
+¡Te esperamos! 😊`}
+                              label="Recordar cita por whatsapp"
                             />
-                          </div>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs text-zinc-400 whitespace-nowrap">
+                                {nextReservation.startAtLabel}
+                              </span>
+
+                              <CancelReservationButton
+                                reservationId={nextReservation.id}
+                              />
+                            </div>
+                          </>
                         ) : (
                           <span className="text-xs text-zinc-500">
                             Sin cita activa

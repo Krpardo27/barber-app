@@ -85,6 +85,10 @@ export async function createReservationAction(data: unknown) {
       },
     });
 
+    revalidatePath("/admin/agenda");
+    revalidatePath("/admin/clientes");
+    revalidatePath("/admin/reservas");
+    revalidatePath("/admin");
     revalidatePath("/reservar");
     return {
       success: true,

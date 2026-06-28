@@ -31,9 +31,11 @@ export async function cancelReservationAction(
       },
     });
 
+    revalidatePath("/admin/agenda");
     revalidatePath("/admin/clientes");
     revalidatePath("/admin/reservas");
     revalidatePath("/admin/historial");
+    revalidatePath("/admin");
     revalidatePath("/reservar");
 
     return {

@@ -37,9 +37,11 @@ export async function updateReservationStatusAction(
       },
     });
 
+    revalidatePath("/admin/agenda");
     revalidatePath("/admin/reservas");
     revalidatePath("/admin/historial");
     revalidatePath("/admin/clientes");
+    revalidatePath("/admin");
     revalidatePath("/reservar");
 
     return { success: true };

@@ -7,21 +7,35 @@ import {
   formatShortDate,
   formatTwentyFourHourTime,
 } from "@/shared/utils/dateFormatters";
+import { formatPrice } from "@/shared/utils/formatPrice";
+import Link from "next/link";
 import { FiCalendar, FiClock, FiUser } from "react-icons/fi";
 
-function getTodayInputValue() {
+function getInputValue(date: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Santiago",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(new Date());
+  }).formatToParts(date);
 
   const year = parts.find((part) => part.type === "year")?.value;
   const month = parts.find((part) => part.type === "month")?.value;
   const day = parts.find((part) => part.type === "day")?.value;
 
   return `${year}-${month}-${day}`;
+}
+
+function getTodayInputValue() {
+  return getInputValue(new Date());
+}
+
+function getTomorrowInputValue() {
+  return getInputValue(new Date(Date.now() + 24 * 60 * 60 * 1000));
+}
+
+function getUpcomingLimitInputValue() {
+  return getInputValue(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
 }
 
 function toDateStart(value: string) {
@@ -37,13 +51,28 @@ function toDateEnd(value: string) {
 export default async function AgendaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; view?: string }>;
 }) {
-  const { date } = await searchParams;
-  const selectedDate = date || getTodayInputValue();
-  const fromDate =
-    toDateStart(selectedDate) ?? toDateStart(getTodayInputValue())!;
-  const toDate = toDateEnd(selectedDate) ?? toDateEnd(getTodayInputValue())!;
+  const { date, view } = await searchParams;
+  const todayInput = getTodayInputValue();
+  const tomorrowInput = getTomorrowInputValue();
+  const isUpcomingView = view === "upcoming";
+  const selectedDate = date || todayInput;
+  const selectedDateIsValid = Boolean(toDateStart(selectedDate));
+  const activeDate = selectedDateIsValid ? selectedDate : todayInput;
+  const isTodaySelected = !isUpcomingView && activeDate === todayInput;
+  const isTomorrowSelected = !isUpcomingView && activeDate === tomorrowInput;
+  const fallbackFromDate = toDateStart(todayInput)!;
+  const fallbackToDate = toDateEnd(todayInput)!;
+  const fromDate = isUpcomingView
+    ? new Date()
+    : (toDateStart(selectedDate) ?? fallbackFromDate);
+  const toDate = isUpcomingView
+    ? toDateEnd(getUpcomingLimitInputValue())!
+    : (toDateEnd(selectedDate) ?? fallbackToDate);
+  const agendaLabel = isUpcomingView
+    ? "Próximas citas activas"
+    : formatLongDate(fromDate);
 
   const reservations = await prisma.reservation.findMany({
     where: {
@@ -57,40 +86,77 @@ export default async function AgendaPage({
   const pendingCount = reservations.filter(
     (reservation) => reservation.status === ReservationStatus.PENDING,
   ).length;
-  const confirmedCount = reservations.filter(
-    (reservation) => reservation.status === ReservationStatus.CONFIRMED,
-  ).length;
+  const estimatedRevenue = reservations.reduce(
+    (total, reservation) => total + reservation.servicePrice,
+    0,
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-3xl font-bold text-white">Agenda</h2>
-          <p className="mt-2 capitalize text-zinc-400">
-            {formatLongDate(fromDate)}
-          </p>
+          <p className="mt-2 capitalize text-zinc-400">{agendaLabel}</p>
         </div>
 
-        <form
-          action="/admin/agenda"
-          className="flex flex-col gap-2 sm:flex-row sm:items-end"
-        >
-          <label className="flex flex-col gap-2 text-xs text-zinc-300">
-            Fecha
-            <input
-              type="date"
-              name="date"
-              defaultValue={selectedDate}
-              className="h-10 rounded-lg border border-white/10 bg-[#111111] px-3 text-sm text-white"
-            />
-          </label>
-          <button
-            type="submit"
-            className="h-10 rounded-lg bg-[#C8A96E] px-4 text-sm font-semibold text-black transition-colors hover:bg-[#d8bb82]"
+        <div className="flex flex-col gap-3 sm:items-end">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/admin/agenda?date=${todayInput}`}
+              aria-current={isTodaySelected ? "page" : undefined}
+              className={
+                isTodaySelected
+                  ? "inline-flex h-9 items-center rounded-lg border border-[#C8A96E]/40 bg-[#C8A96E]/15 px-3 text-xs font-semibold text-[#F5E6C8]"
+                  : "inline-flex h-9 items-center rounded-lg border border-white/10 px-3 text-xs font-semibold text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
+              }
+            >
+              Hoy{isTodaySelected ? " · seleccionado" : ""}
+            </Link>
+            <Link
+              href={`/admin/agenda?date=${tomorrowInput}`}
+              aria-current={isTomorrowSelected ? "page" : undefined}
+              className={
+                isTomorrowSelected
+                  ? "inline-flex h-9 items-center rounded-lg border border-[#C8A96E]/40 bg-[#C8A96E]/15 px-3 text-xs font-semibold text-[#F5E6C8]"
+                  : "inline-flex h-9 items-center rounded-lg border border-white/10 px-3 text-xs font-semibold text-zinc-300 transition-colors hover:bg-white/5 hover:text-white"
+              }
+            >
+              Mañana{isTomorrowSelected ? " · seleccionado" : ""}
+            </Link>
+            <Link
+              href="/admin/agenda?view=upcoming"
+              aria-current={isUpcomingView ? "page" : undefined}
+              className={
+                isUpcomingView
+                  ? "inline-flex h-9 items-center rounded-lg border border-[#C8A96E]/40 bg-[#C8A96E]/15 px-3 text-xs font-semibold text-[#F5E6C8]"
+                  : "inline-flex h-9 items-center rounded-lg border border-[#C8A96E]/30 px-3 text-xs font-semibold text-[#C8A96E] transition-colors hover:bg-[#C8A96E]/10 hover:text-[#F5E6C8]"
+              }
+            >
+              Próximas{isUpcomingView ? " · seleccionado" : ""}
+            </Link>
+          </div>
+
+          <form
+            action="/admin/agenda"
+            className="flex flex-col gap-2 sm:flex-row sm:items-end"
           >
-            Ver día
-          </button>
-        </form>
+            <label className="flex flex-col gap-2 text-xs text-zinc-300">
+              Fecha
+              <input
+                type="date"
+                name="date"
+                defaultValue={selectedDate}
+                className="h-10 rounded-lg border border-white/10 bg-[#111111] px-3 text-sm text-white"
+              />
+            </label>
+            <button
+              type="submit"
+              className="h-10 rounded-lg bg-[#C8A96E] px-4 text-sm font-semibold text-black transition-colors hover:bg-[#d8bb82]"
+            >
+              Ver día
+            </button>
+          </form>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -110,10 +176,10 @@ export default async function AgendaPage({
         </div>
         <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/10 p-4">
           <p className="text-xs uppercase tracking-wide text-emerald-500/80">
-            Confirmadas
+            Ingresos estimados
           </p>
           <p className="mt-2 text-2xl font-semibold text-emerald-300">
-            {confirmedCount}
+            {formatPrice(estimatedRevenue)}
           </p>
         </div>
       </div>
@@ -144,6 +210,9 @@ export default async function AgendaPage({
                     </span>
                   </div>
                   <p className="text-sm text-zinc-400">
+                    {isUpcomingView
+                      ? `${formatShortDate(reservation.startAt)} · `
+                      : ""}
                     {reservation.serviceName} · {reservation.durationMin} min ·
                     ${reservation.servicePrice.toLocaleString("es-CL")}
                   </p>
@@ -165,7 +234,9 @@ Hola ${reservation.customer.name}. Te recordamos que tu cita de *${reservation.s
           <div className="p-12 text-center">
             <FiCalendar className="mx-auto h-8 w-8 text-zinc-600" />
             <p className="mt-3 text-zinc-400">
-              No hay citas activas para este día.
+              {isUpcomingView
+                ? "No hay próximas citas activas."
+                : "No hay citas activas para este día."}
             </p>
           </div>
         )}

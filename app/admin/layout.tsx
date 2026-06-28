@@ -55,7 +55,7 @@ export default async function DashboardLayout({
 
         <SidebarAdmin userName={displayName} userEmail={displayEmail} />
 
-        <section className="min-h-[calc(100vh-2rem)] rounded-2xl border border-[#dedede]/10 bg-[#141414] p-4 pb-28 shadow-xl shadow-black/20 md:p-8 md:pb-10">
+        <section className="min-h-[calc(100vh-2rem)] rounded-2xl border border-[#dedede]/10 bg-[#141414] p-4 pb-[calc(8.5rem+env(safe-area-inset-bottom))] shadow-xl shadow-black/20 md:p-8 lg:pb-10">
           <header className="mb-8 border-b border-[#dedede]/10 pb-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>

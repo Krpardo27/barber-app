@@ -51,7 +51,7 @@ export default function Pagination({
   if (totalItems === 0) return null;
 
   return (
-    <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between pb-5">
+    <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
       <p className="text-sm text-zinc-400">
         Mostrando{" "}
         <span className="font-medium text-zinc-200">{from}–{to}</span> de{" "}

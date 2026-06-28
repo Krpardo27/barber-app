@@ -1,7 +1,7 @@
 export const heroData = {
   brand: {
-    name: "El Filo",
-    since: "Est. 2020",
+    name: "Los Monos",
+    since: "2025",
     tagline: "Barbería de autor",
   },
   headline: {

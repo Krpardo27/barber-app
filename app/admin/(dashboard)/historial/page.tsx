@@ -188,7 +188,7 @@ export default async function HistorialPage({
         </p>
       )}
 
-      <ReservasTable reservations={reservations} />
+      <ReservasTable reservations={reservations} showDeleteAction />
     </div>
   );
 }

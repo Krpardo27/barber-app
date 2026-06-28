@@ -2,6 +2,7 @@
 
 import { FiPhone, FiMail, FiCalendar } from "react-icons/fi";
 import { CancelReservationButton } from "../../../shared/components/admin/CancelReservationButton";
+import DeleteCustomerButton from "../../../shared/components/admin/DeleteCustomerButton";
 import WhatsAppButton from "../../../shared/components/admin/WhatsAppButton";
 
 interface Customer {
@@ -107,9 +108,15 @@ Hola ${customer.name}. Te recordamos que tu cita de *${nextReservation.serviceNa
                             </div>
                           </>
                         ) : (
-                          <span className="text-xs text-zinc-500">
-                            Sin cita activa
-                          </span>
+                          <div className="flex flex-col gap-2">
+                            <span className="text-xs text-zinc-500">
+                              Sin cita activa
+                            </span>
+                            <DeleteCustomerButton
+                              customerId={customer.id}
+                              customerName={customer.name}
+                            />
+                          </div>
                         )}
                       </div>
                     </td>

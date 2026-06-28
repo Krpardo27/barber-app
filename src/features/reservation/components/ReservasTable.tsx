@@ -1,5 +1,6 @@
 import { FiUser, FiPhone, FiClock, FiDollarSign } from "react-icons/fi";
 import { CancelReservationButton } from "../../../shared/components/admin/CancelReservationButton";
+import DeleteReservationButton from "../../../shared/components/admin/DeleteReservationButton";
 import ReservationStatusButtons from "../../../shared/components/admin/ReservationStatusButtons";
 import WhatsAppButton from "../../../shared/components/admin/WhatsAppButton";
 
@@ -53,6 +54,7 @@ interface ReservasTableProps {
   showCancelAction?: boolean;
   showStatusActions?: boolean;
   showWhatsAppAction?: boolean;
+  showDeleteAction?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -71,6 +73,7 @@ export default function ReservasTable({
   showCancelAction = false,
   showStatusActions = false,
   showWhatsAppAction = false,
+  showDeleteAction = false,
 }: ReservasTableProps) {
   return (
     <>
@@ -86,7 +89,7 @@ export default function ReservasTable({
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Duración</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Precio</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Estado</th>
-                {(showCancelAction || showStatusActions || showWhatsAppAction) && (
+                {(showCancelAction || showStatusActions || showWhatsAppAction || showDeleteAction) && (
                   <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Acciones</th>
                 )}
               </tr>
@@ -137,7 +140,7 @@ export default function ReservasTable({
                       {reservation.status}
                     </span>
                   </td>
-                  {(showCancelAction || showStatusActions || showWhatsAppAction) && (
+                  {(showCancelAction || showStatusActions || showWhatsAppAction || showDeleteAction) && (
                     <td className="px-6 py-4">
                       <div className="flex flex-col xl:flex-row gap-2">
                         {showWhatsAppAction && (
@@ -152,6 +155,9 @@ export default function ReservasTable({
                         )}
                         {showCancelAction && (
                           <CancelReservationButton reservationId={reservation.id} />
+                        )}
+                        {showDeleteAction && (
+                          <DeleteReservationButton reservationId={reservation.id} />
                         )}
                       </div>
                     </td>

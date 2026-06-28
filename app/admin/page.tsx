@@ -48,11 +48,11 @@ export default async function AdminPage() {
       href: "/admin/clientes",
     },
     {
-      label: "Reservas Hoy",
+      label: "Agenda de Hoy",
       value: reservasHoy,
       icon: FiCalendar,
       color: "from-green-600 to-green-700",
-      href: "/admin/reservas",
+      href: "/admin/agenda",
     },
     {
       label: "Servicios Activos",

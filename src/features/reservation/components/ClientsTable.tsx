@@ -56,50 +56,59 @@ export default function ClientsTable({ customers }: ClientsTableProps) {
                 const nextReservation = customer.reservations[0];
 
                 return (
-                <tr key={customer.id} className="hover:bg-white/2 transition-colors">
-                  <td className="px-6 py-4 text-white font-medium">{customer.name}</td>
-                  <td className="px-6 py-4 text-white">
-                    <div className="flex items-center gap-2">
-                      <FiPhone className="h-4 w-4 text-zinc-500 shrink-0" />
-                      <span>{customer.phone}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-white">
-                    <div className="flex items-center gap-2">
-                      <FiMail className="h-4 w-4 text-zinc-500 shrink-0" />
-                      <span>{customer.email || "—"}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-400">
-                      <FiCalendar className="h-3 w-3 shrink-0" />
-                      <span>{customer.reservations.length}</span>
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-white text-xs">
-                    {customer.createdAtLabel}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <WhatsAppButton
-                        phone={customer.phone}
-                        message={`Hola ${customer.name}, te escribimos desde la barberia.`}
-                        label="Contactar"
-                      />
-                      {nextReservation ? (
-                        <>
-                        <span className="text-xs text-zinc-400 whitespace-nowrap">
-                          {nextReservation.startAtLabel}
-                        </span>
-                        <CancelReservationButton reservationId={nextReservation.id} />
-                        </>
-                      ) : (
-                        <span className="text-xs text-zinc-500">Sin cita activa</span>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
+                  <tr
+                    key={customer.id}
+                    className="hover:bg-white/2 transition-colors"
+                  >
+                    <td className="px-6 py-4 text-white font-medium">
+                      {customer.name}
+                    </td>
+                    <td className="px-6 py-4 text-white">
+                      <div className="flex items-center gap-2">
+                        <FiPhone className="h-4 w-4 text-zinc-500 shrink-0" />
+                        <span>{customer.phone}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-white">
+                      <div className="flex items-center gap-2">
+                        <FiMail className="h-4 w-4 text-zinc-500 shrink-0" />
+                        <span>{customer.email || "—"}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-3 py-1 text-sm text-blue-400">
+                        <FiCalendar className="h-3 w-3 shrink-0" />
+                        <span>{customer.reservations.length}</span>
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-white text-xs">
+                      {customer.createdAtLabel}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-2">
+                        <WhatsAppButton
+                          phone={customer.phone}
+                          message={`Hola ${customer.name}, te escribimos desde la barberia.`}
+                          label="Contactar"
+                        />
+                        {nextReservation ? (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs text-zinc-400 whitespace-nowrap">
+                              {nextReservation.startAtLabel}
+                            </span>
+                            <CancelReservationButton
+                              reservationId={nextReservation.id}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-zinc-500">
+                            Sin cita activa
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
               })}
             </tbody>
           </table>

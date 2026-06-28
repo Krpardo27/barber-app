@@ -139,11 +139,11 @@ export default function ReservasTable({
                   </td>
                   {(showCancelAction || showStatusActions || showWhatsAppAction) && (
                     <td className="px-6 py-4">
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-col xl:flex-row gap-2">
                         {showWhatsAppAction && (
                           <WhatsAppButton
                             phone={reservation.customer?.phone}
-                            message={`Hola ${reservation.customer?.name || ""}, te escribimos por tu reserva de ${reservation.serviceName} en la barberia.`}
+                            message={`Hola ${reservation.customer?.name || ""}, te escribimos por tu reserva de ${reservation.serviceName} en la barbería.`}
                             label="Contactar"
                           />
                         )}

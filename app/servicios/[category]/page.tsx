@@ -8,21 +8,6 @@ async function getServices(categorySlug?: string) {
       isActive: true,
       ...(categorySlug ? { category: { slug: categorySlug } } : {}),
     },
-    include: {
-      category: true,
-      _count: {
-        select: {
-          reservations: {
-            where: {
-              status: { in: ["COMPLETED", "CONFIRMED", "PENDING"] },
-              createdAt: {
-                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-              },
-            },
-          },
-        },
-      },
-    },
     orderBy: [{ featured: "desc" }, { name: "asc" }],
   });
 }
@@ -40,15 +25,10 @@ export default async function ServiciosCategoryPage({
   }
 
   const services = await getServices(category);
-  const maxReservations = services.length > 0 ? Math.max(...services.map(s => s._count.reservations)) : 0;
-  const enrichedServices = services.map((service) => ({
-    ...service,
-    isMostReserved: service._count.reservations === maxReservations && maxReservations > 0,
-  }));
 
   return (
     <ServiciosSection
-      services={enrichedServices}
+      services={services}
       emptyMessage="No hay servicios disponibles en esta categoria."
     />
   );

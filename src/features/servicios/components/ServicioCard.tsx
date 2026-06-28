@@ -4,21 +4,17 @@ import Link from "next/link";
 
 type ServiceCardProps = {
   service: Service;
-  isMostReserved?: boolean;
 };
 
-export default function ServicioCard({
-  service,
-  isMostReserved = false,
-}: ServiceCardProps) {
+export default function ServicioCard({ service }: ServiceCardProps) {
   return (
     <article className="group flex h-full flex-col justify-between rounded-2xl border border-zinc-800/80 bg-zinc-950 p-5 transition-colors hover:border-[#C8A96E]/35 sm:p-6">
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
-          {isMostReserved && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-400">
+          {service.featured && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#C8A96E]/25 bg-[#C8A96E]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#C8A96E]">
               <FiStar className="h-3 w-3" />
-              Más reservado
+              Destacado
             </span>
           )}
 

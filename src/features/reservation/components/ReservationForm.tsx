@@ -132,7 +132,7 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full py-4 rounded-2xl bg-[#C8A96E] text-stone-950 font-bold text-sm tracking-wider uppercase hover:bg-[#F5E6C8] transition-colors disabled:opacity-50"
+        className="w-full py-4 rounded-2xl bg-[#C8A96E] cursor-pointer text-stone-950 font-bold text-sm tracking-wider uppercase hover:bg-[#F5E6C8] transition-colors disabled:opacity-50"
       >
         {isSubmitting ? "Reservando..." : "Confirmar Reserva"}
       </button>

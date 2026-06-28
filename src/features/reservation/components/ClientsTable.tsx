@@ -1,7 +1,8 @@
 "use client";
 
 import { FiPhone, FiMail, FiCalendar } from "react-icons/fi";
-import { CancelReservationButton } from "./CancelReservationButton";
+import { CancelReservationButton } from "../../../shared/components/admin/CancelReservationButton";
+import WhatsAppButton from "../../../shared/components/admin/WhatsAppButton";
 
 interface Customer {
   id: string;
@@ -79,16 +80,23 @@ export default function ClientsTable({ customers }: ClientsTableProps) {
                     {customer.createdAtLabel}
                   </td>
                   <td className="px-6 py-4">
-                    {nextReservation ? (
-                      <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <WhatsAppButton
+                        phone={customer.phone}
+                        message={`Hola ${customer.name}, te escribimos desde la barberia.`}
+                        label="Contactar"
+                      />
+                      {nextReservation ? (
+                        <>
                         <span className="text-xs text-zinc-400 whitespace-nowrap">
                           {nextReservation.startAtLabel}
                         </span>
                         <CancelReservationButton reservationId={nextReservation.id} />
-                      </div>
-                    ) : (
-                      <span className="text-xs text-zinc-500">Sin cita activa</span>
-                    )}
+                        </>
+                      ) : (
+                        <span className="text-xs text-zinc-500">Sin cita activa</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

@@ -1,6 +1,7 @@
 import { FiUser, FiPhone, FiClock, FiDollarSign } from "react-icons/fi";
-import { CancelReservationButton } from "./CancelReservationButton";
-import ReservationStatusButtons from "./ReservationStatusButtons";
+import { CancelReservationButton } from "../../../shared/components/admin/CancelReservationButton";
+import ReservationStatusButtons from "../../../shared/components/admin/ReservationStatusButtons";
+import WhatsAppButton from "../../../shared/components/admin/WhatsAppButton";
 
 interface Customer {
   id: string;
@@ -51,6 +52,7 @@ interface ReservasTableProps {
   reservations: Reservation[];
   showCancelAction?: boolean;
   showStatusActions?: boolean;
+  showWhatsAppAction?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -68,6 +70,7 @@ export default function ReservasTable({
   reservations,
   showCancelAction = false,
   showStatusActions = false,
+  showWhatsAppAction = false,
 }: ReservasTableProps) {
   return (
     <>
@@ -83,7 +86,7 @@ export default function ReservasTable({
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Duración</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Precio</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Estado</th>
-                {(showCancelAction || showStatusActions) && (
+                {(showCancelAction || showStatusActions || showWhatsAppAction) && (
                   <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Acciones</th>
                 )}
               </tr>
@@ -134,9 +137,16 @@ export default function ReservasTable({
                       {reservation.status}
                     </span>
                   </td>
-                  {(showCancelAction || showStatusActions) && (
+                  {(showCancelAction || showStatusActions || showWhatsAppAction) && (
                     <td className="px-6 py-4">
                       <div className="flex flex-wrap items-center gap-2">
+                        {showWhatsAppAction && (
+                          <WhatsAppButton
+                            phone={reservation.customer?.phone}
+                            message={`Hola ${reservation.customer?.name || ""}, te escribimos por tu reserva de ${reservation.serviceName} en la barberia.`}
+                            label="Contactar"
+                          />
+                        )}
                         {showStatusActions && (
                           <ReservationStatusButtons reservationId={reservation.id} />
                         )}

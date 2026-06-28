@@ -17,8 +17,6 @@ export default async function DashboardLayout({
     headers: await headers(),
   });
 
-  console.log("SESSION:", session);
-
   if (!session?.user) {
     redirect("/auth/login?callbackURL=/admin");
   }

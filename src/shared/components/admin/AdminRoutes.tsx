@@ -7,6 +7,7 @@ import { isAdminRouteActive } from "./isAdminRouteActive";
 import {
   FiHome,
   FiCalendar,
+  FiClock,
   FiUsers,
   FiScissors,
   FiArchive,
@@ -22,6 +23,11 @@ export const ADMIN_ROUTES = [
     href: "/admin/reservas",
     label: "Reservas",
     icon: FiCalendar,
+  },
+  {
+    href: "/admin/agenda",
+    label: "Agenda",
+    icon: FiClock,
   },
   {
     href: "/admin/clientes",

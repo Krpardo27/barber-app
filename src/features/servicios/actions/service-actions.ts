@@ -92,13 +92,14 @@ function revalidateServices() {
 
 async function validateCategory(
   categoryId: string,
+  currentCategoryId?: string,
 ): Promise<
   | { category: { id: string; slug: string }; error: null }
   | { category: null; error: ServiceActionState }
 > {
   const category = await prisma.category.findUnique({
     where: { id: categoryId },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, isActive: true },
   });
 
   if (!category) {
@@ -108,6 +109,17 @@ async function validateCategory(
         status: "error",
         message: "La categoria seleccionada no existe",
         fieldErrors: { categoryId: ["Selecciona una categoria valida"] },
+      },
+    };
+  }
+
+  if (!category.isActive && category.id !== currentCategoryId) {
+    return {
+      category: null,
+      error: {
+        status: "error",
+        message: "La categoria seleccionada no esta activa",
+        fieldErrors: { categoryId: ["Selecciona una categoria activa"] },
       },
     };
   }
@@ -209,7 +221,12 @@ export async function updateServiceAction(
 
   const currentService = await prisma.service.findUnique({
     where: { id: serviceId },
-    select: { id: true, slug: true, category: { select: { slug: true } } },
+    select: {
+      id: true,
+      slug: true,
+      categoryId: true,
+      category: { select: { slug: true } },
+    },
   });
 
   if (!currentService) {
@@ -226,7 +243,7 @@ export async function updateServiceAction(
     };
   }
 
-  const categoryResult = await validateCategory(parsed.data.categoryId);
+  const categoryResult = await validateCategory(parsed.data.categoryId, currentService.categoryId);
   if (categoryResult.error) return categoryResult.error;
 
   const existingSlug = await prisma.service.findUnique({

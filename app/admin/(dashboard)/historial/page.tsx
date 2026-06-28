@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import ReservasTable from "@/shared/components/admin/ReservasTable";
+import ReservasTable from "@/features/reservation/components/ReservasTable";
 import type { Prisma, ReservationStatus } from "@/generated/prisma/client";
 import HistorialFilters from "@/shared/components/admin/HistorialFilters";
 import { notFound } from "next/navigation";

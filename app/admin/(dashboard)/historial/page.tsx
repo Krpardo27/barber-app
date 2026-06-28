@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import ReservasTable from "@/features/reservation/components/ReservasTable";
 import type { Prisma, ReservationStatus } from "@/generated/prisma/client";
+import ExportCompletedReservationsButton from "@/shared/components/admin/ExportCompletedReservationsButton";
 import HistorialFilters from "@/shared/components/admin/HistorialFilters";
+import { formatAppointmentDateTime } from "@/shared/utils/dateFormatters";
+import { formatPrice } from "@/shared/utils/formatPrice";
 import { notFound } from "next/navigation";
 
 type HistorialStatus = "ALL" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
@@ -15,6 +18,21 @@ function toDateStart(value: string) {
 function toDateEnd(value: string) {
   const date = new Date(`${value}T23:59:59.999`);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getTodayInputValue() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Santiago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const year = parts.find((part) => part.type === "year")?.value;
+  const month = parts.find((part) => part.type === "month")?.value;
+  const day = parts.find((part) => part.type === "day")?.value;
+
+  return `${year}-${month}-${day}`;
 }
 
 function getSingleParam(value?: string | string[]) {
@@ -54,6 +72,10 @@ export default async function HistorialPage({
   const to = getSingleParam(params.to) || "";
   const fromDate = from ? toDateStart(from) : null;
   const toDate = to ? toDateEnd(to) : null;
+  const completedFrom = from || getTodayInputValue();
+  const completedTo = to || completedFrom;
+  const completedFromDate = toDateStart(completedFrom)!;
+  const completedToDate = toDateEnd(completedTo)!;
 
   const rangeFilter = {
     ...(fromDate ? { gte: fromDate } : {}),
@@ -91,6 +113,38 @@ export default async function HistorialPage({
     take: 100,
   });
 
+  const completedReservations = await prisma.reservation.findMany({
+    where: {
+      status: "COMPLETED",
+      completedAt: { gte: completedFromDate, lte: completedToDate },
+    },
+    include: { customer: true, service: true },
+    orderBy: { completedAt: "desc" },
+  });
+
+  const completedTotal = completedReservations.reduce(
+    (total, reservation) => total + reservation.servicePrice,
+    0,
+  );
+
+  const completedExportRows = completedReservations.map((reservation) => ({
+    customerName: reservation.customer.name,
+    customerPhone: reservation.customer.phone,
+    customerEmail: reservation.customer.email || "",
+    serviceName: reservation.serviceName,
+    appointmentDate: formatAppointmentDateTime(reservation.startAt),
+    completedDate: reservation.completedAt
+      ? formatAppointmentDateTime(reservation.completedAt)
+      : "",
+    durationMin: reservation.durationMin,
+    servicePrice: reservation.servicePrice,
+  }));
+
+  const completedRangeLabel =
+    completedFrom === completedTo
+      ? completedFrom
+      : `${completedFrom} a ${completedTo}`;
+
   const hasActiveFilters = selectedStatus !== "ALL" || Boolean(from) || Boolean(to);
 
   return (
@@ -103,6 +157,28 @@ export default async function HistorialPage({
       </div>
 
       <HistorialFilters selectedStatus={selectedStatus} from={from} to={to} />
+
+      <section className="grid gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/10 p-4 md:grid-cols-[1fr_auto] md:items-center">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wide text-emerald-400">
+            Completadas: {completedRangeLabel}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <span className="rounded-xl border border-white/10 bg-black/15 px-3 py-2 text-sm text-zinc-200">
+              {completedReservations.length} clientes
+            </span>
+            <span className="rounded-xl border border-white/10 bg-black/15 px-3 py-2 text-sm font-semibold text-white">
+              Total {formatPrice(completedTotal)}
+            </span>
+          </div>
+        </div>
+
+        <ExportCompletedReservationsButton
+          rows={completedExportRows}
+          total={completedTotal}
+          fileName={`clientes-completados-${completedFrom}-${completedTo}.xlsx`}
+        />
+      </section>
 
       {hasActiveFilters && (
         <p className="text-xs text-zinc-400">

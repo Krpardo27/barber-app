@@ -39,18 +39,25 @@ export default function AdminMobileDock() {
                 onClick={triggerHapticFeedback}
                 className={
                   active
-                    ? "flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl border border-[#C8A96E]/30 bg-[#C8A96E]/15 px-0.5 py-1 text-[9px] font-semibold text-white min-[390px]:text-[10px]"
-                    : "flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-0.5 py-1 text-[9px] font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white min-[390px]:text-[10px]"
+                    ? "group relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-0.5 py-1 text-[9px] font-semibold text-white min-[390px]:text-[10px]"
+                    : "group relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-0.5 py-1 text-[9px] font-medium text-zinc-400 transition-colors hover:text-white min-[390px]:text-[10px]"
                 }
               >
                 <Icon className="h-4 w-4 shrink-0" />
                 <span className="max-w-full truncate leading-none">
                   {MOBILE_LABELS[route.href] ?? route.label}
                 </span>
+                <span
+                  className={
+                    active
+                      ? "absolute inset-x-3 bottom-1 h-0.5 rounded-full bg-[#C8A96E] transition-all duration-300 ease-out"
+                      : "absolute inset-x-1/2 bottom-1 h-0.5 rounded-full bg-[#C8A96E]/80 opacity-0 transition-all duration-300 ease-out group-hover:inset-x-4 group-hover:opacity-100"
+                  }
+                />
               </Link>
             );
           })}
-          <LogoutButton />
+          <LogoutButton variant="dock" />
         </nav>
       </div>
     </div>

@@ -79,6 +79,7 @@ export default async function ReservasPage({ searchParams }: ReservasPageProps) 
             { customer: { name: { contains: query, mode: "insensitive" } } },
             { customer: { phone: { contains: query, mode: "insensitive" } } },
             { customer: { email: { contains: query, mode: "insensitive" } } },
+            { barber: { name: { contains: query, mode: "insensitive" } } },
           ],
         }
       : {}),
@@ -107,7 +108,7 @@ export default async function ReservasPage({ searchParams }: ReservasPageProps) 
 
   const reservations = await prisma.reservation.findMany({
     where,
-    include: { customer: true, service: true },
+    include: { customer: true, service: true, barber: true },
     orderBy: { startAt: "desc" },
     skip,
     take: ITEMS_PER_PAGE,
@@ -122,7 +123,7 @@ export default async function ReservasPage({ searchParams }: ReservasPageProps) 
 
       <AdminSearch
         initialQuery={query}
-        placeholder="Buscar por cliente, teléfono, email o servicio"
+        placeholder="Buscar por cliente, teléfono, email, servicio o barbero"
       />
 
       <ReservationFilters

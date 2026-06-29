@@ -12,6 +12,7 @@ const MOBILE_LABELS: Record<string, string> = {
   "/admin/agenda": "Agenda",
   "/admin/clientes": "Clientes",
   "/admin/servicios": "Servicios",
+  "/admin/barberos": "Barberos",
   "/admin/historial": "Historial",
 };
 
@@ -28,7 +29,7 @@ export default function AdminMobileDock() {
     <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
       <div className="animate-[dockIn_380ms_cubic-bezier(0.16,1,0.3,1)] relative mx-auto max-w-xl overflow-hidden rounded-[1.35rem] border border-[#dedede]/10 bg-[#111111]/95 shadow-[0_-12px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl motion-reduce:animate-none">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-[#C8A96E]/70 to-transparent" />
-        <nav className="grid grid-cols-7 gap-1 p-1.5">
+        <nav className="grid grid-cols-4 gap-1 p-1.5">
           {ADMIN_ROUTES.map((route) => {
             const active = isAdminRouteActive(pathname, route.href);
             const Icon = route.icon;

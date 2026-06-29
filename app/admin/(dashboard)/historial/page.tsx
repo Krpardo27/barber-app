@@ -108,7 +108,7 @@ export default async function HistorialPage({
 
   const reservations = await prisma.reservation.findMany({
     where: whereClause,
-    include: { customer: true, service: true },
+    include: { customer: true, service: true, barber: true },
     orderBy: [{ cancelledAt: "desc" }, { completedAt: "desc" }, { startAt: "desc" }],
     take: 100,
   });
@@ -118,7 +118,7 @@ export default async function HistorialPage({
       status: "COMPLETED",
       completedAt: { gte: completedFromDate, lte: completedToDate },
     },
-    include: { customer: true, service: true },
+    include: { customer: true, service: true, barber: true },
     orderBy: { completedAt: "desc" },
   });
 
@@ -131,6 +131,7 @@ export default async function HistorialPage({
     customerName: reservation.customer.name,
     customerPhone: reservation.customer.phone,
     customerEmail: reservation.customer.email || "",
+    barberName: reservation.barber?.name || "Sin asignar",
     serviceName: reservation.serviceName,
     appointmentDate: formatAppointmentDateTime(reservation.startAt),
     completedDate: reservation.completedAt

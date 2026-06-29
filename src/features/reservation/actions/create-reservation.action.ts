@@ -13,6 +13,7 @@ export async function createReservationAction(data: unknown) {
 
   const {
     serviceId,
+    barberId,
     customerId,
     customerName,
     customerPhone,
@@ -25,6 +26,23 @@ export async function createReservationAction(data: unknown) {
     const service = await prisma.service.findUniqueOrThrow({
       where: { id: serviceId },
     });
+
+    let resolvedBarberId: string | null = null;
+
+    if (barberId) {
+      const barber = await prisma.barber.findFirst({
+        where: { id: barberId, isActive: true },
+        select: { id: true },
+      });
+
+      if (!barber) {
+        return {
+          errors: [{ message: "El barbero seleccionado no está disponible." }],
+        };
+      }
+
+      resolvedBarberId = barber.id;
+    }
 
     const start = new Date(startAt!);
     const end = new Date(start.getTime() + service.durationMin * 60 * 1000);
@@ -76,6 +94,7 @@ export async function createReservationAction(data: unknown) {
       data: {
         customerId: resolvedCustomerId,
         serviceId: service.id,
+        barberId: resolvedBarberId,
         serviceName: service.name,
         servicePrice: service.price,
         durationMin: service.durationMin,

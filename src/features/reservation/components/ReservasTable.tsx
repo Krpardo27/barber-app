@@ -30,6 +30,18 @@ interface Service {
   updatedAt: Date;
 }
 
+interface Barber {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  bio: string | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 interface Reservation {
   id: string;
   customerId: string;
@@ -47,6 +59,7 @@ interface Reservation {
   updatedAt: Date;
   customer: Customer;
   service: Service;
+  barber: Barber | null;
 }
 
 interface ReservasTableProps {
@@ -85,6 +98,7 @@ export default function ReservasTable({
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Cliente</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Teléfono</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Servicio</th>
+                <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Barbero</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Fecha y Hora</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Duración</th>
                 <th className="px-6 py-4 text-left font-semibold text-zinc-300 whitespace-nowrap">Precio</th>
@@ -110,6 +124,7 @@ export default function ReservasTable({
                     </div>
                   </td>
                   <td className="px-6 py-4 text-white">{reservation.serviceName || "N/A"}</td>
+                  <td className="px-6 py-4 text-white">{reservation.barber?.name || "Sin asignar"}</td>
                   <td className="px-6 py-4 text-white">
                     {new Date(reservation.startAt).toLocaleString("es-CL", {
                       year: "2-digit",

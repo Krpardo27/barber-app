@@ -53,6 +53,11 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
           phone: true,
         },
       },
+      barber: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 
@@ -65,9 +70,10 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
   const whatsappMessage = [
     `Hola, soy ${reservation.customer.name}.`,
     `Acabo de reservar: ${reservation.serviceName} para el ${formattedDate}.`,
+    reservation.barber ? `Barbero seleccionado: ${reservation.barber.name}.` : "",
     `Mi telefono es ${reservation.customer.phone}.`,
     "Quedo atento a la confirmación. Gracias.",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
   const whatsappUrl = buildWhatsAppUrl(BARBERSHOP_WHATSAPP_PHONE, whatsappMessage);
 
   return (
@@ -113,6 +119,13 @@ export default async function ConfirmationPage({ searchParams }: ConfirmationPag
             <div className="flex flex-col gap-1 border-b border-white/5 pb-3 sm:flex-row sm:justify-between">
               <span className="text-zinc-400">Fecha y hora</span>
               <span className="capitalize text-white sm:max-w-[60%] sm:text-right">{formattedDate}</span>
+            </div>
+
+            <div className="flex flex-col gap-1 border-b border-white/5 pb-3 sm:flex-row sm:justify-between">
+              <span className="text-zinc-400">Barbero</span>
+              <span className="text-white sm:text-right">
+                {reservation.barber?.name ?? "Sin asignar"}
+              </span>
             </div>
 
             <div className="flex flex-col gap-1 border-b border-white/5 pb-3 sm:flex-row sm:justify-between">

@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { FiUsers, FiCalendar, FiScissors, FiClock } from "react-icons/fi";
+import { FiUsers, FiCalendar, FiScissors, FiUserCheck } from "react-icons/fi";
 
 export default async function AdminPage() {
   const session = await auth.api.getSession({
@@ -19,7 +19,7 @@ export default async function AdminPage() {
   const today = new Date(now.toDateString());
   const tomorrow = new Date(today.getTime() + 86400000);
   
-  const [totalClientes, reservasHoy, totalServicios, proximasReservas] = await Promise.all([
+  const [totalClientes, reservasHoy, totalServicios, totalBarberos] = await Promise.all([
     prisma.customer.count(),
     prisma.reservation.count({
       where: {
@@ -31,12 +31,7 @@ export default async function AdminPage() {
       },
     }),
     prisma.service.count({ where: { isActive: true } }),
-    prisma.reservation.count({
-      where: {
-        startAt: { gte: now },
-        status: { in: ["PENDING", "CONFIRMED"] },
-      },
-    }),
+    prisma.barber.count({ where: { isActive: true } }),
   ]);
 
   const stats = [
@@ -62,11 +57,11 @@ export default async function AdminPage() {
       href: "/admin/servicios",
     },
     {
-      label: "Próximas Citas",
-      value: proximasReservas,
-      icon: FiClock,
+      label: "Barberos Activos",
+      value: totalBarberos,
+      icon: FiUserCheck,
       color: "from-purple-600 to-purple-700",
-      href: "/admin/reservas",
+      href: "/admin/barberos",
     },
   ];
 

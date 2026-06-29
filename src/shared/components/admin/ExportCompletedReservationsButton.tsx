@@ -8,6 +8,7 @@ export type CompletedReservationExportRow = {
   customerName: string;
   customerPhone: string;
   customerEmail: string;
+  barberName: string;
   serviceName: string;
   appointmentDate: string;
   completedDate: string;
@@ -46,6 +47,7 @@ export default function ExportCompletedReservationsButton({
           { value: "Cliente", ...headerStyle },
           { value: "Telefono", ...headerStyle },
           { value: "Email", ...headerStyle },
+          { value: "Barbero", ...headerStyle },
           { value: "Servicio", ...headerStyle },
           { value: "Fecha cita", ...headerStyle },
           { value: "Completada", ...headerStyle },
@@ -56,6 +58,7 @@ export default function ExportCompletedReservationsButton({
           { value: row.customerName },
           { value: row.customerPhone },
           { value: row.customerEmail },
+          { value: row.barberName },
           { value: row.serviceName },
           { value: row.appointmentDate },
           { value: row.completedDate },
@@ -63,6 +66,7 @@ export default function ExportCompletedReservationsButton({
           { value: row.servicePrice, type: Number, format: '"$"#,##0' },
         ]),
         [
+          null,
           null,
           null,
           null,
@@ -79,6 +83,7 @@ export default function ExportCompletedReservationsButton({
           { width: 28 },
           { width: 16 },
           { width: 28 },
+          { width: 22 },
           { width: 28 },
           { width: 20 },
           { width: 20 },

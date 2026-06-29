@@ -11,6 +11,7 @@ import {
   FiUsers,
   FiScissors,
   FiArchive,
+  FiUserCheck,
 } from "react-icons/fi";
 
 export const ADMIN_ROUTES = [
@@ -38,6 +39,11 @@ export const ADMIN_ROUTES = [
     href: "/admin/servicios",
     label: "Servicios",
     icon: FiScissors,
+  },
+  {
+    href: "/admin/barberos",
+    label: "Barberos",
+    icon: FiUserCheck,
   },
   {
     href: "/admin/historial",

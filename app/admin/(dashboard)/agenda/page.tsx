@@ -79,7 +79,7 @@ export default async function AgendaPage({
       status: { in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
       startAt: { gte: fromDate, lte: toDate },
     },
-    include: { customer: true, service: true },
+    include: { customer: true, service: true, barber: true },
     orderBy: { startAt: "asc" },
   });
 
@@ -207,6 +207,9 @@ export default async function AgendaPage({
                     </span>
                     <span className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-zinc-300">
                       {reservation.status}
+                    </span>
+                    <span className="rounded-full bg-[#C8A96E]/10 px-2.5 py-1 text-xs text-[#C8A96E]">
+                      {reservation.barber?.name ?? "Sin barbero"}
                     </span>
                   </div>
                   <p className="text-sm text-zinc-400">

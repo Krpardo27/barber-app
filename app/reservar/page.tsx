@@ -15,13 +15,20 @@ async function getServices() {
   });
 }
 
+async function getBarbers() {
+  return prisma.barber.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
 export default async function ReservarPage({
   searchParams,
 }: {
   searchParams: Promise<{ serviceId?: string }>;
 }) {
   const { serviceId } = await searchParams;
-  const services = await getServices();
+  const [services, barbers] = await Promise.all([getServices(), getBarbers()]);
 
   // Si se pasa un serviceId, verificar que exista y esté activo
   if (serviceId) {
@@ -54,7 +61,11 @@ export default async function ReservarPage({
         </header>
 
         <div className="bg-zinc-900/40 border border-zinc-900 backdrop-blur-sm rounded-2xl p-6 lg:p-8">
-          <ReservationForm services={services} defaultServiceId={serviceId} />
+          <ReservationForm
+            services={services}
+            barbers={barbers}
+            defaultServiceId={serviceId}
+          />
         </div>
       </div>
     </main>

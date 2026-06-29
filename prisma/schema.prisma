@@ -115,6 +115,25 @@ model Service {
   @@index([isActive])
 }
 
+model Barber {
+  id       String  @id @default(cuid())
+  name     String
+  phone    String?
+  email    String?
+  bio      String?
+  imageUrl String?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservations Reservation[]
+
+  @@index([name])
+  @@index([isActive])
+}
+
 enum ReservationStatus {
   PENDING
   CONFIRMED
@@ -148,6 +167,7 @@ model Reservation {
 
   customerId String
   serviceId  String
+  barberId   String?
 
   serviceName  String
   servicePrice Int
@@ -168,9 +188,11 @@ model Reservation {
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   service  Service  @relation(fields: [serviceId], references: [id])
+  barber   Barber?  @relation(fields: [barberId], references: [id], onDelete: SetNull)
 
   @@index([customerId])
   @@index([serviceId])
+  @@index([barberId])
   @@index([startAt])
   @@index([status])
 }

@@ -9,6 +9,8 @@ export const ReservationSchema = z
       message: "Selecciona un servicio",
     }),
 
+    barberId: z.string().optional(),
+
     customerMode: z.enum(["search", "new"]),
     customerId: z.string().optional(),
     customerName: z.string().optional(),

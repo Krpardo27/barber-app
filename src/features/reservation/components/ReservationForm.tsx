@@ -8,14 +8,15 @@ import { ReservationSchema, type ReservationFormData } from "../schemas/reservat
 import { createReservationAction } from "../actions/create-reservation.action";
 import SlotPicker from "./SlotPicker";
 import CustomerFields from "./CustomerFields";
-import type { Service } from "@/generated/prisma/client";
+import type { Barber, Service } from "@/generated/prisma/client";
 
 type Props = {
   services: Service[];
+  barbers: Barber[];
   defaultServiceId?: string;
 };
 
-export default function ReservationForm({ services, defaultServiceId }: Props) {
+export default function ReservationForm({ services, barbers, defaultServiceId }: Props) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -29,6 +30,7 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
     resolver: zodResolver(ReservationSchema),
     defaultValues: {
       serviceId: defaultServiceId ?? "",
+      barberId: "",
       customerMode: "search",
     },
   });
@@ -77,6 +79,26 @@ export default function ReservationForm({ services, defaultServiceId }: Props) {
           <p className="text-red-400 text-xs mt-1">{errors.serviceId.message}</p>
         )}
       </div>
+
+      {/* BARBERO */}
+      {barbers.length > 0 && (
+        <div>
+          <label className="mb-2 block text-xs uppercase tracking-widest text-zinc-400">
+            Barbero
+          </label>
+          <select
+            {...register("barberId")}
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white focus:border-[#C8A96E] focus:outline-none"
+          >
+            <option value="">Cualquier barbero disponible</option>
+            {barbers.map((barber) => (
+              <option key={barber.id} value={barber.id}>
+                {barber.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* FECHA Y HORA */}
       {serviceId && (

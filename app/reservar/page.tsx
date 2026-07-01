@@ -19,21 +19,30 @@ async function getBarbers() {
   return prisma.barber.findMany({
     where: { isActive: true },
     orderBy: { name: "asc" },
+    include: {
+      services: {
+        select: { serviceId: true, durationMin: true, isActive: true },
+      },
+    },
   });
 }
 
 export default async function ReservarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ serviceId?: string }>;
+  searchParams: Promise<{ serviceId?: string; servicio?: string }>;
 }) {
-  const { serviceId } = await searchParams;
+  const { serviceId, servicio } = await searchParams;
   const [services, barbers] = await Promise.all([getServices(), getBarbers()]);
 
-  // Si se pasa un serviceId, verificar que exista y esté activo
-  if (serviceId) {
-    const valid = services.some((s) => s.id === serviceId);
-    if (!valid) notFound();
+  const selectedService = servicio
+    ? services.find((service) => service.slug === servicio)
+    : serviceId
+      ? services.find((service) => service.id === serviceId)
+      : null;
+
+  if ((servicio || serviceId) && !selectedService) {
+    notFound();
   }
 
   return (
@@ -64,7 +73,7 @@ export default async function ReservarPage({
           <ReservationForm
             services={services}
             barbers={barbers}
-            defaultServiceId={serviceId}
+            defaultServiceId={selectedService?.id}
           />
         </div>
       </div>

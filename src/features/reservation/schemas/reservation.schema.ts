@@ -23,11 +23,13 @@ export const ReservationSchema = z
       .optional(),
 
     customerEmail: z
-      .email({
+      .string()
+      .trim()
+      .toLowerCase()
+      .refine((email) => email === "" || z.email().safeParse(email).success, {
         message: "Email inválido",
       })
-      .optional()
-      .or(z.literal("")),
+      .optional(),
 
     startAt: z.string().optional(),
 

@@ -14,9 +14,21 @@ export default async function EditBarberPage({ params }: EditBarberPageProps) {
     notFound();
   }
 
-  const barber = await prisma.barber.findUnique({
-    where: { id },
-  });
+  const [barber, services] = await Promise.all([
+    prisma.barber.findUnique({
+      where: { id },
+      include: {
+        services: {
+          select: { serviceId: true, durationMin: true, isActive: true },
+        },
+      },
+    }),
+    prisma.service.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, durationMin: true },
+    }),
+  ]);
 
   if (!barber) {
     notFound();
@@ -33,7 +45,11 @@ export default async function EditBarberPage({ params }: EditBarberPageProps) {
         </p>
       </div>
 
-      <BarberAdminForm barber={barber} successRedirectHref="/admin/barberos" />
+      <BarberAdminForm
+        barber={barber}
+        services={services}
+        successRedirectHref="/admin/barberos"
+      />
     </div>
   );
 }

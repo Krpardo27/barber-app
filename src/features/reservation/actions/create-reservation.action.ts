@@ -3,8 +3,26 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ReservationSchema } from "../schemas/reservation.schema";
+import {
+  findAvailableBarber,
+  getActiveService,
+  getDurationForBarber,
+  hasReservationConflict,
+  isInsideBusinessHours,
+  OPEN_HOUR,
+} from "../services/availability";
 
-export async function createReservationAction(data: unknown) {
+type CreateReservationActionResult =
+  | { errors: Array<{ message: string }>; data?: never; success?: false }
+  | { success: true; data: { reservationId: string }; errors?: never };
+
+type ReservationTransactionResult =
+  | { errors: Array<{ message: string }>; reservationId?: never }
+  | { reservationId: string; errors?: never };
+
+export async function createReservationAction(
+  data: unknown,
+): Promise<CreateReservationActionResult> {
   const result = ReservationSchema.safeParse(data);
 
   if (!result.success) {
@@ -21,88 +39,131 @@ export async function createReservationAction(data: unknown) {
     startAt,
     notes,
   } = result.data;
+  const normalizedCustomerEmail = customerEmail || null;
 
   try {
-    const service = await prisma.service.findUniqueOrThrow({
-      where: { id: serviceId },
-    });
+    const reservation = await prisma.$transaction(async (tx): Promise<ReservationTransactionResult> => {
+      const service = await getActiveService(tx, serviceId);
 
-    let resolvedBarberId: string | null = null;
-
-    if (barberId) {
-      const barber = await prisma.barber.findFirst({
-        where: { id: barberId, isActive: true },
-        select: { id: true },
-      });
-
-      if (!barber) {
+      if (!service) {
         return {
-          errors: [{ message: "El barbero seleccionado no está disponible." }],
+          errors: [{ message: "El servicio seleccionado no está disponible." }],
         };
       }
 
-      resolvedBarberId = barber.id;
-    }
+      const start = new Date(startAt!);
 
-    const start = new Date(startAt!);
-    const end = new Date(start.getTime() + service.durationMin * 60 * 1000);
+      if (Number.isNaN(start.getTime()) || start.getHours() < OPEN_HOUR) {
+        return {
+          errors: [{ message: "Selecciona una fecha y hora válida." }],
+        };
+      }
 
-    // Verificar colisión de horario
-    const conflict = await prisma.reservation.findFirst({
-      where: {
-        status: { in: ["PENDING", "CONFIRMED"] },
-        OR: [{ startAt: { lt: end }, endAt: { gt: start } }],
-      },
-    });
+      const lockKey = `reservation:${startAt!.slice(0, 10)}`;
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
-    if (conflict) {
-      return {
-        errors: [{ message: "Ese horario ya está reservado, elige otro." }],
-      };
-    }
+      let resolvedBarberId = barberId || null;
+      let resolvedDurationMin: number | null = null;
 
-    // Resolver cliente — siempre buscar primero por teléfono
-    let resolvedCustomerId = customerId;
+      if (resolvedBarberId) {
+        resolvedDurationMin = await getDurationForBarber(tx, service, resolvedBarberId);
 
-    if (!resolvedCustomerId && customerPhone) {
-      const existing = await prisma.customer.findUnique({
-        where: { phone: customerPhone },
+        if (!resolvedDurationMin) {
+          return {
+            errors: [{ message: "El barbero seleccionado no atiende este servicio." }],
+          };
+        }
+      } else {
+        const availableBarber = await findAvailableBarber(tx, { service, start });
+
+        if (!availableBarber) {
+          return {
+            errors: [{ message: "No hay barberos disponibles para ese horario." }],
+          };
+        }
+
+        resolvedBarberId = availableBarber.barberId;
+        resolvedDurationMin = availableBarber.durationMin;
+      }
+
+      const end = new Date(start.getTime() + resolvedDurationMin * 60 * 1000);
+
+      if (!isInsideBusinessHours(end)) {
+        return {
+          errors: [{ message: "Ese horario termina fuera del horario de atención." }],
+        };
+      }
+
+      const conflict = await hasReservationConflict(tx, {
+        barberId: resolvedBarberId,
+        start,
+        end,
       });
 
-      if (existing) {
-        // Cliente ya existe → reusar sin error
-        resolvedCustomerId = existing.id;
-      } else {
-        const created = await prisma.customer.create({
-          data: {
+      if (conflict) {
+        return {
+          errors: [{ message: "Ese horario ya está reservado, elige otro." }],
+        };
+      }
+
+      let resolvedCustomerId = customerId;
+
+      if (normalizedCustomerEmail) {
+        const existingEmailCustomer = await tx.customer.findFirst({
+          where: { email: normalizedCustomerEmail },
+          select: { id: true, phone: true },
+        });
+        const isSameSelectedCustomer = existingEmailCustomer?.id === resolvedCustomerId;
+        const isSamePhoneCustomer = existingEmailCustomer?.phone === customerPhone;
+
+        if (existingEmailCustomer && !isSameSelectedCustomer && !isSamePhoneCustomer) {
+          return {
+            errors: [{ message: "Ese correo ya está registrado con otro cliente." }],
+          };
+        }
+      }
+
+      if (!resolvedCustomerId && customerPhone) {
+        const customer = await tx.customer.upsert({
+          where: { phone: customerPhone },
+          update: {},
+          create: {
             name: customerName!,
             phone: customerPhone,
-            email: customerEmail || null,
+            email: normalizedCustomerEmail,
           },
+          select: { id: true },
         });
-        resolvedCustomerId = created.id;
+
+        resolvedCustomerId = customer.id;
       }
-    }
 
-    if (!resolvedCustomerId) {
-      return {
-        errors: [{ message: "No se pudo identificar al cliente." }],
-      };
-    }
+      if (!resolvedCustomerId) {
+        return {
+          errors: [{ message: "No se pudo identificar al cliente." }],
+        };
+      }
 
-    const reservation = await prisma.reservation.create({
-      data: {
-        customerId: resolvedCustomerId,
-        serviceId: service.id,
-        barberId: resolvedBarberId,
-        serviceName: service.name,
-        servicePrice: service.price,
-        durationMin: service.durationMin,
-        startAt: start,
-        endAt: end,
-        notes: notes || null,
-      },
+      const createdReservation = await tx.reservation.create({
+        data: {
+          customerId: resolvedCustomerId,
+          serviceId: service.id,
+          barberId: resolvedBarberId,
+          serviceName: service.name,
+          servicePrice: service.price,
+          durationMin: resolvedDurationMin,
+          startAt: start,
+          endAt: end,
+          notes: notes || null,
+        },
+      });
+
+      return { reservationId: createdReservation.id };
     });
+
+    if (reservation.errors) {
+      return reservation;
+    }
 
     revalidatePath("/admin/agenda");
     revalidatePath("/admin/clientes");
@@ -112,7 +173,7 @@ export async function createReservationAction(data: unknown) {
     return {
       success: true,
       data: {
-        reservationId: reservation.id,
+        reservationId: reservation.reservationId,
       },
     };
   } catch (error) {

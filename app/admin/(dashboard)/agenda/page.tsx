@@ -1,4 +1,5 @@
 import { ReservationStatus } from "@/generated/prisma/enums";
+import { CLOSE_HOUR, OPEN_HOUR, SLOT_INTERVAL_MINUTES } from "@/features/reservation/services/availability";
 import { prisma } from "@/lib/prisma";
 import WhatsAppButton from "@/shared/components/admin/WhatsAppButton";
 import {
@@ -48,6 +49,20 @@ function toDateEnd(value: string) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function buildAgendaSlots(date: string) {
+  const slots = [];
+
+  for (let minutes = 0; minutes < (CLOSE_HOUR - OPEN_HOUR) * 60; minutes += SLOT_INTERVAL_MINUTES) {
+    const start = new Date(`${date}T00:00:00`);
+    start.setHours(OPEN_HOUR, minutes, 0, 0);
+
+    const end = new Date(start.getTime() + SLOT_INTERVAL_MINUTES * 60 * 1000);
+    slots.push({ start, end, label: formatTwentyFourHourTime(start) });
+  }
+
+  return slots;
+}
+
 export default async function AgendaPage({
   searchParams,
 }: {
@@ -74,14 +89,21 @@ export default async function AgendaPage({
     ? "Próximas citas activas"
     : formatLongDate(fromDate);
 
-  const reservations = await prisma.reservation.findMany({
-    where: {
-      status: { in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
-      startAt: { gte: fromDate, lte: toDate },
-    },
-    include: { customer: true, service: true, barber: true },
-    orderBy: { startAt: "asc" },
-  });
+  const [reservations, barbers] = await Promise.all([
+    prisma.reservation.findMany({
+      where: {
+        status: { in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+        startAt: { gte: fromDate, lte: toDate },
+      },
+      include: { customer: true, service: true, barber: true },
+      orderBy: { startAt: "asc" },
+    }),
+    prisma.barber.findMany({
+      where: { isActive: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   const pendingCount = reservations.filter(
     (reservation) => reservation.status === ReservationStatus.PENDING,
@@ -90,6 +112,8 @@ export default async function AgendaPage({
     (total, reservation) => total + reservation.servicePrice,
     0,
   );
+  const agendaSlots = buildAgendaSlots(activeDate);
+  const unassignedReservations = reservations.filter((reservation) => !reservation.barberId);
 
   return (
     <div className="space-y-6">
@@ -183,6 +207,125 @@ export default async function AgendaPage({
           </p>
         </div>
       </div>
+
+      {!isUpcomingView && (
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+          <div className="flex flex-col gap-1 border-b border-white/10 p-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Grilla horaria</h3>
+              <p className="text-sm text-zinc-500">
+                Disponibilidad por barbero para el dia seleccionado.
+              </p>
+            </div>
+            <span className="text-xs uppercase tracking-wide text-zinc-500">
+              {OPEN_HOUR}:00 - {CLOSE_HOUR}:00
+            </span>
+          </div>
+
+          {barbers.length > 0 ? (
+            <div className="overflow-x-auto">
+              <div className="min-w-[760px]">
+                <div
+                  className="grid border-b border-white/10 bg-black/20"
+                  style={{ gridTemplateColumns: `96px repeat(${barbers.length}, minmax(180px, 1fr))` }}
+                >
+                  <div className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    Hora
+                  </div>
+                  {barbers.map((barber) => (
+                    <div
+                      key={barber.id}
+                      className="border-l border-white/10 px-3 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-300"
+                    >
+                      {barber.name}
+                    </div>
+                  ))}
+                </div>
+
+                {agendaSlots.map((slot) => (
+                  <div
+                    key={slot.label}
+                    className="grid min-h-18 border-b border-white/5 last:border-b-0"
+                    style={{ gridTemplateColumns: `96px repeat(${barbers.length}, minmax(180px, 1fr))` }}
+                  >
+                    <div className="flex items-start px-3 py-3 text-sm font-semibold text-[#C8A96E]">
+                      {slot.label}
+                    </div>
+                    {barbers.map((barber) => {
+                      const reservation = reservations.find(
+                        (item) =>
+                          item.barberId === barber.id &&
+                          item.startAt < slot.end &&
+                          item.endAt > slot.start,
+                      );
+                      const startsInSlot = reservation
+                        ? reservation.startAt >= slot.start && reservation.startAt < slot.end
+                        : false;
+
+                      return (
+                        <div
+                          key={`${slot.label}-${barber.id}`}
+                          className="border-l border-white/5 p-2"
+                        >
+                          {reservation ? (
+                            <div className={
+                              startsInSlot
+                                ? "rounded-xl border border-[#C8A96E]/30 bg-[#C8A96E]/10 p-3"
+                                : "rounded-xl border border-zinc-800 bg-zinc-900/40 px-3 py-2"
+                            }>
+                              {startsInSlot ? (
+                                <div className="space-y-1">
+                                  <p className="truncate text-sm font-semibold text-white">
+                                    {reservation.customer.name}
+                                  </p>
+                                  <p className="truncate text-xs text-zinc-400">
+                                    {reservation.serviceName}
+                                  </p>
+                                  <p className="text-xs text-[#C8A96E]">
+                                    {formatTwentyFourHourTime(reservation.startAt)} - {formatTwentyFourHourTime(reservation.endAt)}
+                                  </p>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-zinc-500">Ocupado</p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="rounded-xl border border-dashed border-white/10 px-3 py-2 text-xs text-zinc-600">
+                              Libre
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-sm text-zinc-500">
+              No hay barberos activos para construir la grilla.
+            </div>
+          )}
+
+          {unassignedReservations.length > 0 && (
+            <div className="border-t border-white/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Citas antiguas sin barbero asignado
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {unassignedReservations.map((reservation) => (
+                  <span
+                    key={reservation.id}
+                    className="rounded-full border border-yellow-500/20 bg-yellow-500/10 px-3 py-1 text-xs text-yellow-300"
+                  >
+                    {formatTwentyFourHourTime(reservation.startAt)} · {reservation.customer.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
         {reservations.length > 0 ? (

@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { FiCheckCircle, FiEdit3, FiPlus, FiSave, FiTrash2 } from "react-icons/fi";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
-import type { Barber } from "@/generated/prisma/client";
+import type { Barber, BarberService, Service } from "@/generated/prisma/client";
 import {
   createBarberAction,
   deleteBarberAction,
@@ -20,7 +20,10 @@ import {
 } from "../actions/barber-actions";
 
 type BarberAdminFormProps = {
-  barber?: Barber;
+  barber?: Barber & {
+    services?: Pick<BarberService, "serviceId" | "durationMin" | "isActive">[];
+  };
+  services?: Pick<Service, "id" | "name" | "durationMin">[];
   successRedirectHref?: string;
 };
 
@@ -55,8 +58,28 @@ function formValue(formData: FormData, name: string) {
   return formData.get(name)?.toString().trim() ?? "";
 }
 
-function barberHasChanges(barber: Barber, formData: FormData) {
+function barberServiceAssignment(
+  barber: BarberAdminFormProps["barber"],
+  serviceId: string,
+) {
+  return barber?.services?.find((service) => service.serviceId === serviceId);
+}
+
+function barberHasChanges(
+  barber: NonNullable<BarberAdminFormProps["barber"]>,
+  formData: FormData,
+  services: NonNullable<BarberAdminFormProps["services"]>,
+) {
   const isActive = formData.get("isActive") === "on";
+  const serviceHasChanges = services.some((service) => {
+    const assignment = barberServiceAssignment(barber, service.id);
+    const defaultEnabled = assignment?.isActive ?? true;
+    const defaultDuration = assignment?.durationMin ?? service.durationMin;
+    const nextEnabled = formData.get(`serviceEnabled:${service.id}`) === "on";
+    const nextDuration = Number(formData.get(`serviceDuration:${service.id}`) ?? defaultDuration);
+
+    return nextEnabled !== defaultEnabled || nextDuration !== defaultDuration;
+  });
 
   return (
     formValue(formData, "name") !== barber.name ||
@@ -64,7 +87,8 @@ function barberHasChanges(barber: Barber, formData: FormData) {
     formValue(formData, "email") !== (barber.email ?? "") ||
     formValue(formData, "bio") !== (barber.bio ?? "") ||
     formValue(formData, "imageUrl") !== (barber.imageUrl ?? "") ||
-    isActive !== barber.isActive
+    isActive !== barber.isActive ||
+    serviceHasChanges
   );
 }
 
@@ -81,7 +105,11 @@ function SubmitButton({ editing, pending }: { editing: boolean; pending: boolean
   );
 }
 
-export default function BarberAdminForm({ barber, successRedirectHref }: BarberAdminFormProps) {
+export default function BarberAdminForm({
+  barber,
+  services = [],
+  successRedirectHref,
+}: BarberAdminFormProps) {
   const router = useRouter();
   const [phone, setPhone] = useState(barber?.phone ?? "+569");
   const [isPending, startTransition] = useTransition();
@@ -96,7 +124,7 @@ export default function BarberAdminForm({ barber, successRedirectHref }: BarberA
     const form = event.currentTarget;
     const formData = new FormData(form);
 
-    if (barber && !barberHasChanges(barber, formData)) {
+    if (barber && !barberHasChanges(barber, formData, services)) {
       toast.warning("No se detectaron cambios en el barbero");
       return;
     }
@@ -260,6 +288,62 @@ export default function BarberAdminForm({ barber, successRedirectHref }: BarberA
         />
         {fieldError(state, "bio") && <p className="text-xs normal-case tracking-normal text-red-400">{fieldError(state, "bio")}</p>}
       </label>
+
+      {services.length > 0 && (
+        <section className="space-y-3 rounded-2xl border border-white/10 bg-zinc-950/30 p-4">
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-white">
+              Servicios y duracion
+            </h4>
+            <p className="mt-1 text-xs text-zinc-500">
+              Desactiva servicios que este barbero no atiende o ajusta su duracion.
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {services.map((service) => {
+              const assignment = barberServiceAssignment(barber, service.id);
+              const defaultEnabled = assignment?.isActive ?? true;
+              const defaultDuration = assignment?.durationMin ?? service.durationMin;
+
+              return (
+                <div
+                  key={service.id}
+                  className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3"
+                >
+                  <label className="flex items-start gap-3 text-sm text-white">
+                    <input
+                      name={`serviceEnabled:${service.id}`}
+                      type="checkbox"
+                      defaultChecked={defaultEnabled}
+                      className="mt-1 h-4 w-4 accent-[#C8A96E]"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">{service.name}</span>
+                      <span className="mt-1 block text-xs text-zinc-500">
+                        Base: {service.durationMin} min
+                      </span>
+                    </span>
+                  </label>
+
+                  <label className="mt-3 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+                    Duracion del barbero
+                    <input
+                      name={`serviceDuration:${service.id}`}
+                      type="number"
+                      min={5}
+                      max={480}
+                      step={5}
+                      defaultValue={defaultDuration}
+                      className="mt-1 h-10 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 text-sm normal-case tracking-normal text-white outline-none transition-colors focus:border-[#C8A96E]"
+                    />
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <label className="inline-flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950/40 px-3 py-2 text-sm text-zinc-300">

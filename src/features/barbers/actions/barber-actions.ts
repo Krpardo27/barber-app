@@ -34,9 +34,55 @@ function barberFormDataFrom(formData: FormData) {
   };
 }
 
+type BarberServiceConfig = {
+  serviceId: string;
+  durationMin: number | null;
+  isActive: boolean;
+};
+
+function parseBarberServiceConfigs(
+  formData: FormData,
+  services: Array<{ id: string }>,
+): { configs: BarberServiceConfig[]; error: string | null } {
+  const configs: BarberServiceConfig[] = [];
+
+  for (const service of services) {
+    const rawDuration = formData.get(`serviceDuration:${service.id}`)?.toString().trim() ?? "";
+    const isActive = formData.get(`serviceEnabled:${service.id}`) === "on";
+    let durationMin: number | null = null;
+
+    if (rawDuration) {
+      const parsedDuration = Number(rawDuration);
+
+      if (!Number.isInteger(parsedDuration) || parsedDuration < 5 || parsedDuration > 480) {
+        return {
+          configs: [],
+          error: "Las duraciones por servicio deben ser numeros entre 5 y 480 minutos",
+        };
+      }
+
+      durationMin = parsedDuration;
+    }
+
+    configs.push({ serviceId: service.id, durationMin, isActive });
+  }
+
+  return { configs, error: null };
+}
+
+async function getServiceConfigsFromForm(formData: FormData) {
+  const services = await prisma.service.findMany({
+    select: { id: true },
+    orderBy: { name: "asc" },
+  });
+
+  return parseBarberServiceConfigs(formData, services);
+}
+
 function revalidateBarbers() {
   revalidatePath("/admin/barberos");
   revalidatePath("/admin");
+  revalidatePath("/reservar");
 }
 
 export async function createBarberAction(
@@ -59,6 +105,12 @@ export async function createBarberAction(
     };
   }
 
+  const serviceConfigs = await getServiceConfigsFromForm(formData);
+
+  if (serviceConfigs.error) {
+    return { status: "error", message: serviceConfigs.error };
+  }
+
   try {
     await prisma.barber.create({
       data: {
@@ -68,6 +120,9 @@ export async function createBarberAction(
         bio: parsed.data.bio || null,
         imageUrl: parsed.data.imageUrl || null,
         isActive: parsed.data.isActive,
+        services: {
+          create: serviceConfigs.configs,
+        },
       },
     });
 
@@ -101,17 +156,36 @@ export async function updateBarberAction(
     };
   }
 
+  const serviceConfigs = await getServiceConfigsFromForm(formData);
+
+  if (serviceConfigs.error) {
+    return { status: "error", message: serviceConfigs.error };
+  }
+
   try {
-    await prisma.barber.update({
-      where: { id: barberId },
-      data: {
-        name: parsed.data.name,
-        phone: parsed.data.phone || null,
-        email: parsed.data.email || null,
-        bio: parsed.data.bio || null,
-        imageUrl: parsed.data.imageUrl || null,
-        isActive: parsed.data.isActive,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.barber.update({
+        where: { id: barberId },
+        data: {
+          name: parsed.data.name,
+          phone: parsed.data.phone || null,
+          email: parsed.data.email || null,
+          bio: parsed.data.bio || null,
+          imageUrl: parsed.data.imageUrl || null,
+          isActive: parsed.data.isActive,
+        },
+      });
+
+      await tx.barberService.deleteMany({ where: { barberId } });
+
+      if (serviceConfigs.configs.length > 0) {
+        await tx.barberService.createMany({
+          data: serviceConfigs.configs.map((config) => ({
+            ...config,
+            barberId,
+          })),
+        });
+      }
     });
 
     revalidateBarbers();

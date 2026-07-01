@@ -2,22 +2,32 @@
 
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ReservationSchema, type ReservationFormData } from "../schemas/reservation.schema";
 import { createReservationAction } from "../actions/create-reservation.action";
 import SlotPicker from "./SlotPicker";
 import CustomerFields from "./CustomerFields";
-import type { Barber, Service } from "@/generated/prisma/client";
+import type { Barber, BarberService, Service } from "@/generated/prisma/client";
+
+type ReservationBarber = Barber & {
+  services?: Pick<BarberService, "serviceId" | "durationMin" | "isActive">[];
+};
 
 type Props = {
   services: Service[];
-  barbers: Barber[];
+  barbers: ReservationBarber[];
   defaultServiceId?: string;
 };
 
+function getBarberServiceConfig(barber: ReservationBarber | undefined, serviceId: string) {
+  return barber?.services?.find((service) => service.serviceId === serviceId);
+}
+
 export default function ReservationForm({ services, barbers, defaultServiceId }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -36,9 +46,51 @@ export default function ReservationForm({ services, barbers, defaultServiceId }:
   });
 
   const serviceId = useWatch({ control, name: "serviceId" });
+  const barberId = useWatch({ control, name: "barberId" });
   const startAt = useWatch({ control, name: "startAt" });
+  const selectedBarber = barbers.find((barber) => barber.id === barberId);
+  const serviceOptions = selectedBarber
+    ? services.filter((service) => {
+        const config = getBarberServiceConfig(selectedBarber, service.id);
+        return config?.isActive !== false;
+      })
+    : services;
   const selectedService = services.find((s) => s.id === serviceId);
   const serviceField = register("serviceId");
+
+  const syncServiceUrl = useCallback((nextServiceId: string) => {
+    const nextService = services.find((service) => service.id === nextServiceId);
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("serviceId");
+    if (nextService) {
+      params.set("servicio", nextService.slug);
+    } else {
+      params.delete("servicio");
+    }
+
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
+  }, [pathname, router, searchParams, services]);
+
+  useEffect(() => {
+    const selectedServiceIsAvailable = selectedBarber
+      ? services.some((service) => {
+          const config = getBarberServiceConfig(selectedBarber, service.id);
+          return service.id === serviceId && config?.isActive !== false;
+        })
+      : services.some((service) => service.id === serviceId);
+
+    if (!serviceId || !selectedServiceIsAvailable) {
+      const nextServiceId = serviceOptions[0]?.id ?? "";
+
+      setValue("serviceId", nextServiceId);
+      setValue("startAt", "");
+      syncServiceUrl(nextServiceId);
+    }
+  }, [selectedBarber, serviceId, serviceOptions, services, setValue, syncServiceUrl]);
 
   const onSubmit = async (data: ReservationFormData) => {
     setServerError(null);
@@ -55,31 +107,6 @@ export default function ReservationForm({ services, barbers, defaultServiceId }:
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      {/* SERVICIO */}
-      <div>
-        <label className="text-xs uppercase tracking-widest text-zinc-400 mb-2 block">
-          Servicio
-        </label>
-        <select
-          {...serviceField}
-          onChange={(event) => {
-            serviceField.onChange(event);
-            setValue("startAt", "");
-          }}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A96E]"
-        >
-          <option value="">Selecciona un servicio</option>
-          {services.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name} — ${s.price.toLocaleString("es-CL")} ({s.durationMin} min)
-            </option>
-          ))}
-        </select>
-        {errors.serviceId && (
-          <p className="text-red-400 text-xs mt-1">{errors.serviceId.message}</p>
-        )}
-      </div>
-
       {/* BARBERO */}
       {barbers.length > 0 && (
         <div>
@@ -87,7 +114,9 @@ export default function ReservationForm({ services, barbers, defaultServiceId }:
             Barbero
           </label>
           <select
-            {...register("barberId")}
+            {...register("barberId", {
+              onChange: () => setValue("startAt", ""),
+            })}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white focus:border-[#C8A96E] focus:outline-none"
           >
             <option value="">Cualquier barbero disponible</option>
@@ -100,10 +129,42 @@ export default function ReservationForm({ services, barbers, defaultServiceId }:
         </div>
       )}
 
+      {/* SERVICIO */}
+      <div>
+        <label className="text-xs uppercase tracking-widest text-zinc-400 mb-2 block">
+          Servicio
+        </label>
+        <select
+          {...serviceField}
+          onChange={(event) => {
+            serviceField.onChange(event);
+            setValue("startAt", "");
+            syncServiceUrl(event.target.value);
+          }}
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#C8A96E]"
+        >
+          <option value="">Selecciona un servicio</option>
+          {serviceOptions.map((service) => {
+            const config = getBarberServiceConfig(selectedBarber, service.id);
+            const durationMin = config?.durationMin ?? service.durationMin;
+
+            return (
+              <option key={service.id} value={service.id}>
+                {service.name} — ${service.price.toLocaleString("es-CL")} ({durationMin} min)
+              </option>
+            );
+          })}
+        </select>
+        {errors.serviceId && (
+          <p className="text-red-400 text-xs mt-1">{errors.serviceId.message}</p>
+        )}
+      </div>
+
       {/* FECHA Y HORA */}
       {serviceId && (
         <SlotPicker
           serviceId={serviceId}
+          barberId={barberId || undefined}
           value={startAt ?? ""}
           onChange={(iso) => setValue("startAt", iso)}
         />

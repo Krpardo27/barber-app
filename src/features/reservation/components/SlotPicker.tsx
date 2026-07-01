@@ -5,20 +5,22 @@ import { useAvailableSlots } from "../hooks/useAvailableSlots";
 
 type Props = {
   serviceId: string;
+  barberId?: string;
   value: string;
   onChange: (isoString: string) => void;
 };
 
-export default function SlotPicker({ serviceId, value, onChange }: Props) {
+export default function SlotPicker({ serviceId, barberId, value, onChange }: Props) {
   const today = new Date().toISOString().split("T")[0];
   const [selectedDate, setSelectedDate] = useState(today);
-  const { slots, loading } = useAvailableSlots(serviceId, selectedDate);
+  const { slots, loading } = useAvailableSlots(serviceId, selectedDate, barberId);
 
   const handleSlot = (time: string) => {
     onChange(`${selectedDate}T${time}:00`);
   };
 
   const selectedTime = value?.split("T")[1]?.slice(0, 5);
+  const showInitialLoading = loading && slots.length === 0;
 
   return (
     <div className="space-y-4">
@@ -39,24 +41,36 @@ export default function SlotPicker({ serviceId, value, onChange }: Props) {
       </div>
 
       <div>
-        <label className="text-xs uppercase tracking-widest text-zinc-400 mb-2 block">
+        <label className="mb-2 block text-xs uppercase tracking-widest text-zinc-400">
           Hora disponible
         </label>
-        {loading ? (
-          <p className="text-zinc-500 text-sm">Cargando horarios...</p>
+
+        {showInitialLoading ? (
+          <div className="grid min-h-24 grid-cols-4 gap-2" aria-label="Actualizando horarios">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-10 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900/70"
+              />
+            ))}
+          </div>
         ) : slots.length === 0 ? (
-          <p className="text-zinc-500 text-sm">No hay horarios disponibles para este día.</p>
+          <div className="flex min-h-24 items-center rounded-xl border border-dashed border-zinc-800 px-4 text-sm text-zinc-500">
+            No hay horarios disponibles para este día.
+          </div>
         ) : (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid min-h-24 grid-cols-4 gap-2">
             {slots.map((slot) => (
               <button
                 key={slot.time}
                 type="button"
-                disabled={!slot.available}
+                disabled={loading || !slot.available}
                 onClick={() => handleSlot(slot.time)}
                 className={`
                   rounded-lg px-3 py-2 text-sm font-medium transition-all border
-                  ${!slot.available
+                  ${loading
+                    ? "cursor-wait opacity-50 border-zinc-800 text-zinc-500"
+                    : !slot.available
                     ? "opacity-30 cursor-not-allowed border-zinc-800 text-zinc-600"
                     : selectedTime === slot.time
                       ? "border-[#C8A96E] bg-[#C8A96E]/10 text-[#F5E6C8]"

@@ -51,7 +51,7 @@ export default function ServicioCard({ service }: ServiceCardProps) {
         </div>
 
         <Link
-          href={`/reservar?serviceId=${service.id}`}
+          href={`/reservar?servicio=${service.slug}`}
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#C8A96E]/30 bg-[#C8A96E] px-4 text-xs font-bold uppercase tracking-wide text-zinc-950 transition-colors hover:bg-[#F5E6C8] sm:w-auto"
         >
           Reservar

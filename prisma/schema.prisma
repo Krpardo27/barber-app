@@ -109,6 +109,7 @@ model Service {
   updatedAt DateTime @updatedAt
 
   reservations Reservation[]
+  barberServices BarberService[]
 
   @@index([slug])
   @@index([categoryId])
@@ -129,8 +130,28 @@ model Barber {
   updatedAt DateTime @updatedAt
 
   reservations Reservation[]
+  services BarberService[]
 
   @@index([name])
+  @@index([isActive])
+}
+
+model BarberService {
+  id          String  @id @default(cuid())
+  barberId    String
+  serviceId   String
+  durationMin Int?
+  isActive    Boolean @default(true)
+
+  barber  Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([barberId, serviceId])
+  @@index([barberId])
+  @@index([serviceId])
   @@index([isActive])
 }
 
@@ -147,7 +168,7 @@ model Customer {
 
   name  String
   phone String  @unique
-  email String?
+  email String? @unique
 
   notes String?
 
@@ -160,6 +181,7 @@ model Customer {
 
   @@index([name])
   @@index([phone])
+  @@index([email])
 }
 
 model Reservation {

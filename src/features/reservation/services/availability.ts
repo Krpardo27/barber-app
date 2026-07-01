@@ -2,7 +2,7 @@ import type { PrismaClient } from "@/generated/prisma/client";
 import { ReservationStatus } from "@/generated/prisma/enums";
 
 export const OPEN_HOUR = 9;
-export const CLOSE_HOUR = 19;
+export const CLOSE_HOUR = 20;
 export const SLOT_INTERVAL_MINUTES = 30;
 
 const ACTIVE_RESERVATION_STATUSES = [
